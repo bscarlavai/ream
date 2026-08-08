@@ -6,9 +6,11 @@ struct DocumentDetailView: View {
     @Environment(\.modelContext) private var context
 
     @State private var isRenaming = false
+    @State private var draftTitle = ""
     @State private var showingLabels = false
     @State private var showingFillSign = false
-    @State private var draftTitle = ""
+    /// Bumped when the file on disk changes, to force `PDFView` to re-read it.
+    @State private var revision = 0
 
     private var fileURL: URL {
         DocumentStore.shared.url(for: document.fileName)
@@ -26,16 +28,56 @@ struct DocumentDetailView: View {
             .joined(separator: " · ")
     }
 
+    /// Title and labels, with the rename affordance attached to the title itself.
+    ///
+    /// A pencil alone in the toolbar never said WHAT it edited — the document's name or its
+    /// contents. Sitting against the title, it can only mean one thing.
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Button {
+                draftTitle = document.title
+                isRenaming = true
+            } label: {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(document.title)
+                        .font(.largeTitle.bold())
+                        .foregroundStyle(Theme.primaryText)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    Image(systemName: "pencil")
+                        .font(.title3)
+                        .foregroundStyle(Theme.tertiaryText)
+                    Spacer(minLength: 0)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Rename \(document.title)")
+
+            if !labelSummary.isEmpty {
+                Text(labelSummary)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondaryText)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, Theme.Spacing.medium)
+        .padding(.bottom, Theme.Spacing.small)
+        .background(.bar)
+    }
+
     var body: some View {
-        PDFViewer(url: fileURL)
+        PDFViewer(url: fileURL, revision: revision)
             .ignoresSafeArea(edges: .bottom)
-            .navigationTitle(document.title)
-            .navigationSubtitle(labelSummary)
-            // Large, so the title is LEFT-ALIGNED on its own row. An inline title is centred
-            // and shares the bar with the buttons, which is what forced them into an overflow
-            // menu and truncated long names. Given its own row, a long scan title has room
-            // and all four actions stay visible.
-            .navigationBarTitleDisplayMode(.large)
+            .safeAreaInset(edge: .top, spacing: 0) { header }
+            // The title is drawn in `header`, not by the navigation bar.
+            //
+            // `.navigationTitle($document.title)` looked ideal — a tappable title with a
+            // native Rename menu — but on iOS it takes the toolbar over for its own menu and
+            // collapses the trailing buttons into a "…" overflow, which is precisely what
+            // this screen was changed to avoid. Owning the header keeps both: a left-aligned
+            // title that visibly invites a tap, and the actions on show.
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // Share sits in its own glass group; the three document actions form a
                 // second. Splitting them is what keeps the icons concentric — three or four
@@ -61,13 +103,6 @@ struct DocumentDetailView: View {
                     }
                     .accessibilityLabel("Labels")
 
-                    Button {
-                        draftTitle = document.title
-                        isRenaming = true
-                    } label: {
-                        Image(systemName: "pencil")
-                    }
-                    .accessibilityLabel("Rename")
                 }
             }
             .sheet(isPresented: $showingLabels) {
@@ -76,6 +111,14 @@ struct DocumentDetailView: View {
             .fullScreenCover(isPresented: $showingFillSign) {
                 FillSignView(document: document)
             }
+            // `PDFView` caches by URL, and saving markups rewrites the SAME path — so
+            // without an explicit nudge the viewer kept showing the pre-markup document
+            // until the screen was left and re-entered.
+            .onChange(of: showingFillSign) { _, isShowing in
+                if !isShowing { revision += 1 }
+            }
+            // The title binding writes straight through to the model, so persistence and the
+            // manifest have to be driven from the change rather than from a Save button.
             .alert("Rename scan", isPresented: $isRenaming) {
                 TextField("Name", text: $draftTitle)
                 Button("Cancel", role: .cancel) {}
@@ -85,8 +128,8 @@ struct DocumentDetailView: View {
 
     private func rename() {
         let trimmed = draftTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        // Guard the write so an unchanged name doesn't dirty the model and kick off
-        // a pointless @Query re-evaluation.
+        // Guard the write so an unchanged name doesn't dirty the model and kick off a
+        // pointless @Query re-evaluation everywhere the title appears.
         guard !trimmed.isEmpty, trimmed != document.title else { return }
         document.title = trimmed
         try? context.save()
@@ -98,6 +141,8 @@ struct DocumentDetailView: View {
 /// with the rest of iOS — all of which depend on the invisible text layer being right.
 private struct PDFViewer: UIViewRepresentable {
     let url: URL
+    /// Changes when the file at `url` has been rewritten in place.
+    let revision: Int
 
     func makeUIView(context: Context) -> PDFView {
         let view = PDFView()
@@ -117,8 +162,17 @@ private struct PDFViewer: UIViewRepresentable {
     }
 
     func updateUIView(_ view: PDFView, context: Context) {
-        if view.document?.documentURL != url {
+        // Comparing URLs is not enough: markups are saved over the same path, so the URL is
+        // unchanged while the bytes are not. `revision` is what says "re-read it".
+        if view.document?.documentURL != url || context.coordinator.revision != revision {
+            context.coordinator.revision = revision
             view.document = PDFDocument(url: url)
         }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    final class Coordinator {
+        var revision = -1
     }
 }

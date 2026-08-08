@@ -474,7 +474,12 @@ struct FillSignView: View {
         Menu {
             Picker("Ink", selection: $ink) {
                 ForEach(MarkupInk.allCases, id: \.self) { option in
-                    Label(option.displayName, systemImage: "circle.fill").tag(option)
+                    Label {
+                        Text(option.displayName)
+                    } icon: {
+                        Image(uiImage: option.swatchImage)
+                    }
+                    .tag(option)
                 }
             }
         } label: {

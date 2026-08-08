@@ -40,6 +40,28 @@ enum MarkupInk: String, CaseIterable, Codable, Sendable {
     }
 
     var uiColor: UIColor { UIColor(cgColor: cgColor) }
+
+    /// A colour swatch for menu rows.
+    ///
+    /// **An SF Symbol cannot do this.** A `Label(_, systemImage: "circle.fill")` inside a
+    /// menu is rendered as a template and tinted with the menu's own accent, so every option
+    /// came out blue no matter what colour it represented. A real image marked
+    /// `.alwaysOriginal` is the only way UIKit will draw a menu row's icon in its own colours.
+    var swatchImage: UIImage {
+        let size = CGSize(width: 20, height: 20)
+        let format = UIGraphicsImageRendererFormat.default()
+        format.opaque = false
+        let image = UIGraphicsImageRenderer(size: size, format: format).image { context in
+            let rect = CGRect(origin: .zero, size: size).insetBy(dx: 1, dy: 1)
+            uiColor.setFill()
+            context.cgContext.fillEllipse(in: rect)
+            // Outlined always, so white is a visible swatch rather than a blank gap.
+            UIColor.separator.setStroke()
+            context.cgContext.setLineWidth(1)
+            context.cgContext.strokeEllipse(in: rect)
+        }
+        return image.withRenderingMode(.alwaysOriginal)
+    }
 }
 
 /// Something the user placed on a page: typed text, or a drawn signature.
