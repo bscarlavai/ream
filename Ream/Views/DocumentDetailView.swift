@@ -38,15 +38,26 @@ struct DocumentDetailView: View {
                 draftTitle = document.title
                 isRenaming = true
             } label: {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                HStack(alignment: .firstTextBaseline, spacing: 0) {
+                    // No icon, deliberately.
+                    //
+                    // `navigationTitle($binding)` — the system's own editable document title
+                    // — was rendered side by side with this to check what it draws, and the
+                    // answer is NOTHING: plain title text, visually identical to a title you
+                    // can't edit. The affordance is simply that tapping works, the same as
+                    // renaming in Files or Pages.
+                    //
+                    // A pencil was tried at two weights and a chevron after it; all fought
+                    // the bold title and were wide enough to wrap onto a line of their own.
+                    // Matching the system costs nothing and adds no chrome. The binding API
+                    // itself is unusable here only because it hands the toolbar to a system
+                    // menu and collapses the actions into an overflow.
                     Text(document.title)
                         .font(.largeTitle.bold())
                         .foregroundStyle(Theme.primaryText)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                    Image(systemName: "pencil")
-                        .font(.title3)
-                        .foregroundStyle(Theme.tertiaryText)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+
                     Spacer(minLength: 0)
                 }
                 .contentShape(Rectangle())
