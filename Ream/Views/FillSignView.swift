@@ -685,7 +685,8 @@ private struct MarkupItem: View {
                         .padding(.vertical, 3)
                         .background(.black.opacity(0.6), in: Capsule())
                         .fixedSize()
-                        .offset(y: 20)
+                        // Clear of the dashed selection outline, not touching it.
+                        .offset(y: 32)
                         // Hidden while dragging: it would trail the item around and obscure
                         // exactly the area being positioned.
                         .transition(.opacity)

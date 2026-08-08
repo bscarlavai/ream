@@ -31,40 +31,43 @@ struct DocumentDetailView: View {
             .ignoresSafeArea(edges: .bottom)
             .navigationTitle(document.title)
             .navigationSubtitle(labelSummary)
-            .navigationBarTitleDisplayMode(.inline)
+            // Large, so the title is LEFT-ALIGNED on its own row. An inline title is centred
+            // and shares the bar with the buttons, which is what forced them into an overflow
+            // menu and truncated long names. Given its own row, a long scan title has room
+            // and all four actions stay visible.
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                // Two glass groups, not one. Three icons packed into a single capsule left
-                // the outer two sitting against its rounded ends — visibly non-concentric —
-                // and ate enough width to truncate the title. Share is the primary action
-                // and keeps its own group; the rest move behind an overflow menu.
+                // Share sits in its own glass group; the three document actions form a
+                // second. Splitting them is what keeps the icons concentric — three or four
+                // packed into ONE capsule press against its rounded ends.
                 ToolbarItem(placement: .topBarTrailing) {
                     ShareLink(item: fileURL) {
                         Image(systemName: "square.and.arrow.up")
                     }
                 }
                 ToolbarSpacer(.fixed, placement: .topBarTrailing)
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button {
-                            draftTitle = document.title
-                            isRenaming = true
-                        } label: {
-                            Label("Rename", systemImage: "pencil")
-                        }
-                        Button {
-                            showingLabels = true
-                        } label: {
-                            Label("Labels", systemImage: "tag")
-                        }
-                        Button {
-                            showingFillSign = true
-                        } label: {
-                            Label("Fill & Sign", systemImage: "signature")
-                        }
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button {
+                        showingFillSign = true
                     } label: {
-                        Image(systemName: "ellipsis")
+                        Image(systemName: "signature")
                     }
-                    .accessibilityLabel("More actions")
+                    .accessibilityLabel("Fill and sign")
+
+                    Button {
+                        showingLabels = true
+                    } label: {
+                        Image(systemName: "tag")
+                    }
+                    .accessibilityLabel("Labels")
+
+                    Button {
+                        draftTitle = document.title
+                        isRenaming = true
+                    } label: {
+                        Image(systemName: "pencil")
+                    }
+                    .accessibilityLabel("Rename")
                 }
             }
             .sheet(isPresented: $showingLabels) {
