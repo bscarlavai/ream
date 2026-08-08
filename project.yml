@@ -1,0 +1,92 @@
+name: Ream
+options:
+  bundleIdPrefix: com.lavailabs
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+
+settings:
+  configs:
+    Debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG $(inherited)
+    Release:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: ""
+  base:
+    SWIFT_VERSION: "6.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+    ENABLE_USER_SCRIPT_SANDBOXING: "YES"
+    SWIFT_EMIT_LOC_STRINGS: "YES"
+    DEVELOPMENT_TEAM: 84FW6HJMUP
+    ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: "YES"
+    STRING_CATALOG_GENERATE_SYMBOLS: "YES"
+
+targets:
+  Ream:
+    type: application
+    platform: iOS
+    sources:
+      - path: Ream
+        excludes:
+          - "*.storekit"
+    info:
+      path: Ream/Info.plist
+      properties:
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        CFBundleDisplayName: Ream
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        # Ream never uploads anything. The camera is the only sensitive
+        # capability it requests, and only while a scan is in progress.
+        NSCameraUsageDescription: Ream uses the camera to scan your documents. Scans never leave your device.
+        ITSAppUsesNonExemptEncryption: false
+        # Scanned PDFs are user data — expose them in Files.app so people can
+        # get their documents out without going through us.
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        # Declaring the types Ream can open is what puts it in the share sheet's app row,
+        # in "Open in…" from Files/Mail/Safari, and on the Files.app open-with menu. It needs
+        # no extension target — a Share Extension would only add an inline UI on top of this.
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: PDF Document
+            LSHandlerRank: Alternate
+            CFBundleTypeRole: Viewer
+            LSItemContentTypes:
+              - com.adobe.pdf
+          - CFBundleTypeName: Image
+            LSHandlerRank: Alternate
+            CFBundleTypeRole: Viewer
+            LSItemContentTypes:
+              - public.image
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lavailabs.ream
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 84FW6HJMUP
+        SWIFT_STRICT_CONCURRENCY: complete
+    scheme:
+      storeKitConfiguration: Ream/Ream.storekit
+      testTargets:
+        - ReamTests
+
+  ReamTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: ReamTests
+    dependencies:
+      - target: Ream
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lavailabs.ream.tests
+        GENERATE_INFOPLIST_FILE: "YES"
+        SWIFT_STRICT_CONCURRENCY: complete
+        # Hosted by the app so SwiftData and the bundle resolve exactly as they do at runtime.
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Ream.app/Ream
+        BUNDLE_LOADER: $(TEST_HOST)

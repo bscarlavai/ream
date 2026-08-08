@@ -1,0 +1,62 @@
+{
+  "identifier": "REAM_SUPPORTER",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "SUPPORTER",
+      "localizations": [
+        {
+          "description": "Unlocks all five finishes",
+          "displayName": "Supporter",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lavailabs.ream.supporter",
+      "referenceName": "Supporter",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "4.99",
+      "familyShareable": false,
+      "internalID": "SUPPORTERPLUS",
+      "localizations": [
+        {
+          "description": "Same finishes, more generous",
+          "displayName": "Generous Supporter",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lavailabs.ream.supporter.plus",
+      "referenceName": "Supporter Plus",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "9.99",
+      "familyShareable": false,
+      "internalID": "SUPPORTERMAX",
+      "localizations": [
+        {
+          "description": "Same finishes, remarkably generous",
+          "displayName": "Very Generous Supporter",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lavailabs.ream.supporter.max",
+      "referenceName": "Supporter Max",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_failTransactionsEnabled": false,
+    "_locale": "en_US",
+    "_storefront": "USA",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}
