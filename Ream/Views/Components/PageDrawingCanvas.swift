@@ -22,6 +22,21 @@ struct PageDrawingCanvas: UIViewRepresentable {
         // background follows the appearance; this one never does.
         canvas.overrideUserInterfaceStyle = .light
         canvas.tool = PKInkingTool(.pen, color: ink.uiColor, width: 5)
+
+        // **`PKCanvasView` is a `UIScrollView`, and `drawing.bounds` is in CONTENT
+        // coordinates.** Left scrollable, the content origin drifts from the view origin and
+        // every stroke's computed position is wrong by that offset — which put freehand marks
+        // off the page entirely, while signatures were unaffected because their position is
+        // fixed rather than derived from the drawing.
+        //
+        // Pinning scroll and zoom makes content coordinates identical to view coordinates, so
+        // dividing by the canvas size is a valid conversion to page space.
+        canvas.isScrollEnabled = false
+        canvas.bounces = false
+        canvas.minimumZoomScale = 1
+        canvas.maximumZoomScale = 1
+        canvas.contentInsetAdjustmentBehavior = .never
+        canvas.contentInset = .zero
         return canvas
     }
 

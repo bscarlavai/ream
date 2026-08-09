@@ -192,6 +192,64 @@ struct MarkupRendererTests {
         #expect(seen.count == MarkupInk.allCases.count)
     }
 
+    /// Renders a page of the result and reports the pixel at a normalized position.
+    private func renderedPixel(_ data: Data, atX x: Double, y: Double) throws
+        -> (r: UInt8, g: UInt8, b: UInt8, a: UInt8) {
+        let document = try #require(PDFDocument(data: data))
+        let page = try #require(document.page(at: 0))
+        let box = page.bounds(for: .mediaBox)
+        let image = page.thumbnail(of: box.size, for: .mediaBox)
+        let cgImage = try #require(image.cgImage)
+
+        let px = Int(Double(cgImage.width) * x)
+        let py = Int(Double(cgImage.height) * y)
+        var pixel = [UInt8](repeating: 0, count: 4)
+        let context = try #require(CGContext(
+            data: &pixel, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        context.draw(cgImage, in: CGRect(x: -px, y: -(cgImage.height - 1 - py),
+                                         width: cgImage.width, height: cgImage.height))
+        return (pixel[0], pixel[1], pixel[2], pixel[3])
+    }
+
+    /// A drawing markup has to actually land on the page, in its ink, where it was placed.
+    /// Freehand marks once vanished entirely, and nothing in the render path would have said
+    /// so — the PDF was valid, just empty where the mark should have been.
+    @Test("A drawing renders at its position, in its ink")
+    func drawingRendersWhereItIsPlaced() throws {
+        let url = try makePDF(text: "FORM")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        // A solid block, so a hit is unambiguous.
+        let format = UIGraphicsImageRendererFormat.default()
+        format.opaque = false
+        format.scale = 1
+        let block = UIGraphicsImageRenderer(size: CGSize(width: 40, height: 40),
+                                            format: format).image { context in
+            UIColor.black.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 40, height: 40))
+        }
+
+        var markup = PageMarkup(kind: .drawing(block),
+                                pageIndex: 0,
+                                origin: CGPoint(x: 0.3, y: 0.3),
+                                widthFraction: 0.4)
+        markup.ink = .red
+
+        let data = try #require(MarkupRenderer.render(pdfAt: url, markups: [markup]))
+
+        // Inside the block: red ink.
+        let inside = try renderedPixel(data, atX: 0.45, y: 0.4)
+        #expect(inside.r > inside.g && inside.r > inside.b,
+                "The drawing did not render, or rendered in the wrong colour.")
+
+        // Well away from it: untouched page.
+        let outside = try renderedPixel(data, atX: 0.9, y: 0.9)
+        #expect(outside.r > 200 && outside.g > 200 && outside.b > 200,
+                "The drawing bled outside its rect.")
+    }
+
     @Test("An unreadable source returns nil rather than an empty document")
     func returnsNilForBadSource() {
         let missing = FileManager.default.temporaryDirectory

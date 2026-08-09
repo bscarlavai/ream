@@ -582,11 +582,17 @@ struct FillSignView: View {
         guard !bounds.isEmpty, canvasSize.width > 0, canvasSize.height > 0 else { return }
 
         let padded = bounds.insetBy(dx: -6, dy: -6)
+        // Clamped so a mark can never land outside the page. An off-page markup is invisible
+        // AND unselectable, so it can't even be deleted — the user just sees nothing and has
+        // no way to find out why.
+        let origin = CGPoint(
+            x: min(max(padded.minX / canvasSize.width, 0), 0.95),
+            y: min(max(padded.minY / canvasSize.height, 0), 0.95)
+        )
         var markup = PageMarkup(kind: .drawing(drawing.image(from: padded, scale: 3)),
                                 pageIndex: pageIndex,
-                                origin: CGPoint(x: padded.minX / canvasSize.width,
-                                                y: padded.minY / canvasSize.height),
-                                widthFraction: padded.width / canvasSize.width)
+                                origin: origin,
+                                widthFraction: min(padded.width / canvasSize.width, 1))
         markup.ink = ink
         markups.append(markup)
         selectedID = markup.id
