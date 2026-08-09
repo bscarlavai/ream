@@ -64,8 +64,11 @@ enum SampleScans {
             return label
         }
 
-        for (index, lines) in documents.enumerated() {
-            let page = renderPage(lines: lines)
+        var pages: [UIImage] = documents.map { renderPage(lines: $0) }
+        let form = renderForm()
+        pages.append(form.image)
+
+        for (index, page) in pages.enumerated() {
             await pipeline.process(pages: [page], into: context)
 
             // Attach to whatever the pipeline just inserted — it's the newest document.
@@ -76,6 +79,7 @@ enum SampleScans {
             newest.labels = index == 0
                 ? [labels[0], labels[2]]        // one document with two labels
                 : [labels[index % labels.count]]
+            if index == pages.count - 1 { newest.title = "Service Authorization" }
         }
         try? context.save()
 
@@ -86,26 +90,99 @@ enum SampleScans {
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
         if let document = try? context.fetch(newest).first {
-            var typed = PageMarkup(kind: .text("Bret Scarlavai"),
+            // A made-up name. Never a real person's, and least of all the developer's: this
+            // ends up on a public App Store product page.
+            var typed = PageMarkup(kind: .text("Dana Whitmore"),
                                    pageIndex: 0,
-                                   origin: CGPoint(x: 0.17, y: 0.47),
+                                   origin: form.anchors["name"] ?? CGPoint(x: 0.2, y: 0.5),
                                    widthFraction: 0.4)
-            typed.fontFraction = 0.021
+            typed.fontFraction = 0.019
             typed.ink = .blue
+
+            var dated = PageMarkup(kind: .text("14 March 2026"),
+                                   pageIndex: 0,
+                                   origin: form.anchors["date"] ?? CGPoint(x: 0.2, y: 0.66),
+                                   widthFraction: 0.3)
+            dated.fontFraction = 0.019
+            dated.ink = .blue
 
             var signed = PageMarkup(kind: .drawing(signatureMark()),
                                     pageIndex: 0,
-                                    origin: CGPoint(x: 0.17, y: 0.58),
-                                    widthFraction: 0.34)
+                                    // A signature sits higher than typed text: the squiggle's
+                                    // own bounding box is taller than the ink inside it.
+                                    origin: (form.anchors["signature"]
+                                             ?? CGPoint(x: 0.2, y: 0.58))
+                                        .applying(.init(translationX: 0, y: -0.020)),
+                                    widthFraction: 0.26)
             signed.ink = .blue
 
-            document.markupData = MarkupStore.encode([typed, signed])
+            document.markupData = MarkupStore.encode([typed, dated, signed])
         }
 
         try? context.save()
         // The pipeline rebuilt the manifest as each document landed — before these labels
         // were attached. Without this the sample library exports without its labels.
         LibraryManifest.rebuild(from: context)
+    }
+
+    /// A blank form with rules to fill in, and the normalized position of each rule.
+    ///
+    /// Anchors come out of the same layout loop that draws the page, so a markup placed at
+    /// `anchors["signature"]` sits on the signature line by construction rather than by
+    /// eyeballing a screenshot. Sample content is a warranty card elsewhere; you don't sign a
+    /// warranty card, so Fill & Sign needs something that is actually signable.
+    static func renderForm() -> (image: UIImage, anchors: [String: CGPoint]) {
+        let width = 1275, height = 1650
+        let lines: [(String, CGFloat, Bool, String?)] = [
+            ("SERVICE AUTHORIZATION", 46, true, nil),
+            ("", 18, false, nil),
+            ("Northgate Property Management", 30, false, nil),
+            ("Work Order 44719", 30, false, nil),
+            ("", 22, false, nil),
+            ("I authorize the work described above to be", 28, false, nil),
+            ("completed at the address on file.", 28, false, nil),
+            ("", 34, false, nil),
+            ("Name  ______________________", 30, false, "name"),
+            ("", 26, false, nil),
+            ("Signature  ___________________", 30, false, "signature"),
+            ("", 26, false, nil),
+            ("Date  ______________________", 30, false, "date"),
+        ]
+
+        var anchors: [String: CGPoint] = [:]
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        let image = UIGraphicsImageRenderer(size: CGSize(width: width, height: height),
+                                            format: format).image { context in
+            UIColor(red: 0.98, green: 0.975, blue: 0.965, alpha: 1).setFill()
+            context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+
+            var y: CGFloat = 150
+            let left: CGFloat = 120
+            for (text, size, isBold, anchor) in lines {
+                if text.isEmpty { y += size; continue }
+                let font = isBold ? UIFont.systemFont(ofSize: size, weight: .bold)
+                                  : UIFont.systemFont(ofSize: size)
+                (text as NSString).draw(at: CGPoint(x: left, y: y), withAttributes: [
+                    .font: font,
+                    .foregroundColor: UIColor(white: 0.09, alpha: 1),
+                ])
+                if let anchor {
+                    // Just right of the label, sitting ON the rule.
+                    //
+                    // `y` is the TOP of the label text, but the rule is drawn at its
+                    // baseline, and a markup's stored y is also its top. Writing at the
+                    // label's top therefore lands a line low. Lifting by the ascent puts the
+                    // written text on the rule instead of under it.
+                    let labelWidth = (text.prefix(while: { $0 != "_" }) as NSString)
+                        .size(withAttributes: [.font: font]).width
+                    anchors[anchor] = CGPoint(x: (left + labelWidth) / CGFloat(width),
+                                              y: (y - font.ascender * 0.55) / CGFloat(height))
+                }
+                y += font.lineHeight * 1.5
+            }
+        }
+        return (image, anchors)
     }
 
     /// A handwriting-shaped squiggle, drawn rather than captured, so seeded data needs no

@@ -19,9 +19,13 @@ struct MarkupItem: View {
         content
             .padding(.horizontal, 8)
             .padding(.vertical, 6)
+            // `.topLeading`, not `.leading`. A 44pt minimum with centre alignment pushes the
+            // content down by half the slack, so a markup drew about 22pt lower on screen
+            // than `MarkupRenderer` places it in the saved PDF. Growing the tap target
+            // downward instead keeps the editor honest: what you position is where it lands.
             .frame(minWidth: Theme.minTapTarget,
                    minHeight: Theme.minTapTarget,
-                   alignment: .leading)
+                   alignment: .topLeading)
             .background {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(.tint.opacity(isSelected ? 0.10 : 0.001))

@@ -9,12 +9,12 @@
   "accent_color": "#6FB4E3",
   "device_glow": true,
   "font_size_headline": 100,
-  "font_size_subhead": 37,
+  "font_size_subhead": 36,
   "screens": [
     {
-      "filename": "01_library.png",
-      "headline": "Every Scan, *Searchable*",
-      "subheadline": "Ream reads the words on every page as it scans"
+      "filename": "01_free.png",
+      "headline": "*No* Subscription",
+      "subheadline": "No ads, no watermarks, no account. Nothing leaves your phone"
     },
     {
       "filename": "02_search.png",
@@ -24,17 +24,17 @@
     {
       "filename": "03_fillsign.png",
       "headline": "*Fill* It In and Sign",
-      "subheadline": "Type, sign, or draw, then send it back"
+      "subheadline": "Type, sign, or draw, then send it straight back"
     },
     {
-      "filename": "04_finishes.png",
+      "filename": "04_library.png",
+      "headline": "Keep Paper *Organized*",
+      "subheadline": "Label anything, filter by label, find it by sight"
+    },
+    {
+      "filename": "05_finishes.png",
       "headline": "Make It *Yours*",
-      "subheadline": "Five finishes, and every scanning feature stays free"
-    },
-    {
-      "filename": "05_free.png",
-      "headline": "*No* Subscription",
-      "subheadline": "No ads, no watermarks, no account. Nothing leaves your phone"
+      "subheadline": "An optional tip unlocks four more finishes. Everything else is free"
     }
   ]
 }

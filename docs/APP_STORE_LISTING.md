@@ -76,7 +76,7 @@ YOURS TO KEEP
 Export every scan as a plain ZIP of ordinary PDFs. No proprietary format, nothing locked in. A backup you can only open with the app that made it is not a backup.
 
 FREE, AND HONEST ABOUT IT
-Every feature above is free and always will be. If Ream saves you from a scanner subscription, there is a one-time Supporter tip inside that unlocks four extra accent colours. It unlocks nothing else. Nothing in this app is gated behind it.
+Every feature above is free and always will be. If Ream saves you from a scanner subscription, there is a one-time Supporter tip inside that unlocks four extra accent colors. It unlocks nothing else. Nothing in this app is gated behind it.
 ```
 
 **What's New** (v1.0)
@@ -131,7 +131,7 @@ table changes** and the labels must be updated with the next version.
 Ream is an offline document scanner. Scanning, text recognition and PDF creation all run on-device. There is no account, no server and no login, so no demo credentials are required.
 
 IN-APP PURCHASES
-The three purchases are optional, non-consumable tips. They unlock four alternative accent colours and nothing else. No scanning, OCR, PDF creation, editing, export or sharing feature is gated behind them, and the app is fully functional without any purchase. Restore Purchase is in the same screen.
+The three purchases are optional, non-consumable tips. They unlock four alternative accent colors and nothing else. No scanning, OCR, PDF creation, editing, export or sharing feature is gated behind them, and the app is fully functional without any purchase. Restore Purchase is in the same screen.
 
 TO REACH THEM
 Open the app, tap the gear in the top right, then "Support Ream" or "Finish".
@@ -142,7 +142,7 @@ The camera permission is used only for scanning documents with the system docume
 
 **In-App Purchase Review Notes** (per product, in the IAP's own *Review Notes* field)
 ```
-Optional tip. Unlocks four alternative accent colours in the app's Finish picker and nothing else. No functionality is gated behind this purchase; the app is fully usable without it. To reach it: open the app, tap the gear icon in the top right, then "Finish".
+Optional tip. Unlocks four alternative accent colors in the app's Finish picker and nothing else. No functionality is gated behind this purchase; the app is fully usable without it. To reach it: open the app, tap the gear icon in the top right, then "Finish".
 ```
 
 ---
@@ -155,6 +155,6 @@ Use the `app-store-screenshots` skill. Suggested order, strongest first:
 2. **Search mid-query**, showing a match found by a word inside a document. This is the whole
    pitch and it is invisible in a static shot of the library, so the caption has to carry it.
 3. **Fill & Sign** with typed text and a signature on a form.
-4. **The finish picker**, showing the app is customisable and that the tip unlocks colours.
+4. **The finish picker**, showing the app is customizable and that the tip unlocks colors.
 5. **Onboarding card 3** (the struck-through list) as the closer: no subscription, no ads, no
    watermarks, no account.

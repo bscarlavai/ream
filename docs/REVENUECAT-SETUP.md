@@ -49,7 +49,7 @@ For each of the three products: **Monetization → In-App Purchases → +**
 
 7. **Review screenshot** — required once per product before first submission. A capture of
    Settings → Finish showing the tiers is enough.
-8. **Review notes**: state plainly that these unlock cosmetic accent colours only and that no
+8. **Review notes**: state plainly that these unlock cosmetic accent colors only and that no
    functionality is gated. Reviewers check this against the paywall copy.
 9. Each product should reach **Ready to Submit**, and all three must be attached to the first
    app version you submit.
