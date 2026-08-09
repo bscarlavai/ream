@@ -102,13 +102,23 @@ First release.
 no network requests of its own. RevenueCat is the only SDK, and it sees purchase transactions
 only. Answer the questionnaire accordingly rather than guessing "maybe".
 
-**App Review notes**
+**App Review Notes** (App Store Connect → the version's *App Review Information → Notes*)
 ```
-Ream is a document scanner. Everything runs on-device; there is no account and no server.
+Ream is an offline document scanner. Scanning, text recognition and PDF creation all run on-device. There is no account, no server and no login, so no demo credentials are required.
 
-The three in-app purchases are optional tips. They unlock four alternative accent colours and nothing else. No scanning, OCR, PDF, editing or export feature is gated behind them, and the app is fully functional without any purchase.
+IN-APP PURCHASES
+The three purchases are optional, non-consumable tips. They unlock four alternative accent colours and nothing else. No scanning, OCR, PDF creation, editing, export or sharing feature is gated behind them, and the app is fully functional without any purchase. Restore Purchase is in the same screen.
 
-To see the purchases: Settings (gear, top right) then Finish.
+TO REACH THEM
+Open the app, tap the gear in the top right, then "Support Ream" or "Finish".
+
+CAMERA
+The camera permission is used only for scanning documents with the system document scanner. Nothing captured leaves the device.
+```
+
+**In-App Purchase Review Notes** (per product, in the IAP's own *Review Notes* field)
+```
+Optional tip. Unlocks four alternative accent colours in the app's Finish picker and nothing else. No functionality is gated behind this purchase; the app is fully usable without it. To reach it: open the app, tap the gear icon in the top right, then "Finish".
 ```
 
 ---

@@ -7,7 +7,6 @@ struct SettingsView: View {
     @Environment(\.colorScheme) private var scheme
     @Environment(\.modelContext) private var context
     @Environment(SupporterService.self) private var supporter
-    @Environment(\.requestReview) private var requestReview
 
     @Query private var documents: [ScannedDocument]
     @Environment(\.accentFinish) private var finish
@@ -48,6 +47,13 @@ struct SettingsView: View {
                 }
             }
             .sheet(isPresented: $showingFinishes) { SupporterView() }
+            #if DEBUG
+            .task {
+                if LaunchArgument.isPresent(LaunchArgument.showFinishes) {
+                    showingFinishes = true
+                }
+            }
+            #endif
             .sheet(isPresented: $showingLabelManager) { LabelManagerView() }
             .sheet(item: $shareFile) { file in
                 ShareSheet(url: file.url)
@@ -168,9 +174,9 @@ struct SettingsView: View {
                 .buttonStyle(.plain)
             }
 
-            Button {
-                requestReview()
-            } label: {
+            // A link, not `requestReview()`. See `ExternalLink.writeReview`: a deliberate tap
+            // must not land on the system's three-a-year limit and appear to do nothing.
+            Link(destination: ExternalLink.writeReview) {
                 ReamRow(title: "Rate Ream", systemImage: "star", iconTint: accent)
             }
             .buttonStyle(.plain)

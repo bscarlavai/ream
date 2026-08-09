@@ -1,0 +1,40 @@
+{
+  "app_name": "Ream",
+  "background": {
+    "type": "gradient",
+    "colors": ["#0A1C2E", "#04080D"],
+    "direction": "vertical"
+  },
+  "text_color": "#FFFFFF",
+  "accent_color": "#6FB4E3",
+  "device_glow": true,
+  "font_size_headline": 100,
+  "font_size_subhead": 37,
+  "screens": [
+    {
+      "filename": "01_library.png",
+      "headline": "Every Scan, *Searchable*",
+      "subheadline": "Ream reads the words on every page as it scans"
+    },
+    {
+      "filename": "02_search.png",
+      "headline": "Find It By What's *Inside*",
+      "subheadline": "Search what the page says, not what you named it"
+    },
+    {
+      "filename": "03_fillsign.png",
+      "headline": "*Fill* It In and Sign",
+      "subheadline": "Type, sign, or draw, then send it back"
+    },
+    {
+      "filename": "04_finishes.png",
+      "headline": "Make It *Yours*",
+      "subheadline": "Five finishes, and every scanning feature stays free"
+    },
+    {
+      "filename": "05_free.png",
+      "headline": "*No* Subscription",
+      "subheadline": "No ads, no watermarks, no account. Nothing leaves your phone"
+    }
+  ]
+}

@@ -65,8 +65,20 @@ enum DefaultsKey {
 /// Where the app sends people. Centralised so a changed support address or a moved policy
 /// page is one edit, not a search.
 enum ExternalLink {
+    /// Ream's App Store id.
+    static let appStoreID = "6799583392"
+
     static let privacy = URL(string: "https://lavailabs.com/ream/privacy")!
     static let terms = URL(string: "https://lavailabs.com/ream/terms")!
+
+    /// Opens the App Store review sheet directly.
+    ///
+    /// Used for the Settings row, NOT for the automatic milestone prompt. `requestReview` is
+    /// capped by iOS at three prompts a year and silently ignores the rest — fine for a
+    /// prompt the app chooses to show, useless for a button someone deliberately tapped,
+    /// which would appear to do nothing.
+    static let writeReview = URL(string:
+        "https://apps.apple.com/app/id\(appStoreID)?action=write-review")!
 
     static func support(version: String) -> URL {
         // Version in the subject so a bug report arrives already saying which build it's from.
@@ -86,6 +98,18 @@ enum LaunchArgument {
     static let showSettings = "--show-settings"
     static let showDetail = "--show-detail"
     static let onboardingPage = "--onboarding-page"
+    /// Opens Fill & Sign on the newest document.
+    static let showFillSign = "--show-fillsign"
+    /// Pre-fills the search field, so a search-in-progress can be captured.
+    static let search = "--search"
+    /// Opens Settings straight through to the finish picker.
+    static let showFinishes = "--show-finishes"
+    /// Hides debug-only chrome while keeping the other arguments working.
+    ///
+    /// Screenshots need a Debug build for the navigation arguments and seeded data, but must
+    /// not show a "Sample" button that doesn't exist in the shipped app. Apple requires
+    /// screenshots to be of the real UI.
+    static let screenshotMode = "--screenshot"
 
     static func isPresent(_ argument: String) -> Bool {
         ProcessInfo.processInfo.arguments.contains(argument)
@@ -93,9 +117,13 @@ enum LaunchArgument {
 
     /// Reads `--flag <value>`.
     static func intValue(after argument: String) -> Int? {
+        stringValue(after: argument).flatMap(Int.init)
+    }
+
+    static func stringValue(after argument: String) -> String? {
         let args = ProcessInfo.processInfo.arguments
         guard let index = args.firstIndex(of: argument), args.count > index + 1 else { return nil }
-        return Int(args[index + 1])
+        return args[index + 1]
     }
 }
 #endif

@@ -21,6 +21,10 @@ struct DocumentListView: View {
     @State private var labelTarget: ScannedDocument?
     @State private var renameTarget: ScannedDocument?
     @State private var draftTitle = ""
+    #if DEBUG
+    /// Set by `--show-fillsign` so the editor can be captured without a tap.
+    @State private var fillSignTarget: ScannedDocument?
+    #endif
     /// Explicit navigation path so a detail screen can be pushed programmatically.
     /// Rows still use `NavigationLink(value:)`, so the chevron and press behaviour are
     /// unchanged — this only adds a second way in, for launch arguments.
@@ -103,10 +107,13 @@ struct DocumentListView: View {
                 }
                 #if DEBUG
                 // The Simulator has no camera, so this is the only way to get scans
-                // into the app while working on UI.
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Sample") {
-                        Task { await SampleScans.generate(into: context, pipeline: pipeline) }
+                // into the app while working on UI. Hidden under `--screenshot`, which is
+                // still a Debug build but must look like the shipped one.
+                if !LaunchArgument.isPresent(LaunchArgument.screenshotMode) {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Sample") {
+                            Task { await SampleScans.generate(into: context, pipeline: pipeline) }
+                        }
                     }
                 }
                 #endif
@@ -211,6 +218,15 @@ struct DocumentListView: View {
                 if LaunchArgument.isPresent(LaunchArgument.showDetail),
                    let first = documents.first {
                     path.append(first)
+                }
+                if let query = LaunchArgument.stringValue(after: LaunchArgument.search) {
+                    searchText = query
+                    refreshFilter()
+                }
+                if LaunchArgument.isPresent(LaunchArgument.showFillSign),
+                   let first = documents.first {
+                    path.append(first)
+                    fillSignTarget = first
                 }
             }
             #endif

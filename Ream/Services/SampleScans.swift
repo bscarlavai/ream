@@ -51,10 +51,11 @@ enum SampleScans {
     static func generate(into context: ModelContext, pipeline: ScanPipeline) async {
         // Declared locally rather than as a static: an array of tuples isn't inferred
         // Sendable, so as global state Swift 6 isolates it and the access fails to compile.
-        // Prefixed so a Debug build run on a real device can never be mistaken for, or
-        // tangled up with, labels the user actually created.
+        // Unprefixed. A "Sample ·" prefix protected a real device from confusing seeded
+        // labels with real ones, but seeding is DEBUG-only and deliberate, and the prefix
+        // showed up in App Store screenshots where the labels are the thing being sold.
         let sampleLabels: [(String, Int)] = [
-            ("Sample · Household", 1), ("Sample · Medical", 3), ("Sample · Warranty", 4),
+            ("Household", 1), ("Medical", 3), ("Warranty", 4),
         ]
 
         let labels = sampleLabels.map { name, colorIndex in
@@ -77,9 +78,67 @@ enum SampleScans {
                 : [labels[index % labels.count]]
         }
         try? context.save()
+
+        // Give the newest document some markups, so the Fill & Sign editor has something to
+        // show when it's opened by launch argument. Screenshots of an empty editor say
+        // nothing about what the feature does.
+        let newest = FetchDescriptor<ScannedDocument>(
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        if let document = try? context.fetch(newest).first {
+            var typed = PageMarkup(kind: .text("Bret Scarlavai"),
+                                   pageIndex: 0,
+                                   origin: CGPoint(x: 0.17, y: 0.47),
+                                   widthFraction: 0.4)
+            typed.fontFraction = 0.021
+            typed.ink = .blue
+
+            var signed = PageMarkup(kind: .drawing(signatureMark()),
+                                    pageIndex: 0,
+                                    origin: CGPoint(x: 0.17, y: 0.58),
+                                    widthFraction: 0.34)
+            signed.ink = .blue
+
+            document.markupData = MarkupStore.encode([typed, signed])
+        }
+
+        try? context.save()
         // The pipeline rebuilt the manifest as each document landed — before these labels
         // were attached. Without this the sample library exports without its labels.
         LibraryManifest.rebuild(from: context)
+    }
+
+    /// A handwriting-shaped squiggle, drawn rather than captured, so seeded data needs no
+    /// PencilKit session.
+    private static func signatureMark() -> UIImage {
+        let size = CGSize(width: 300, height: 110)
+        let format = UIGraphicsImageRendererFormat.default()
+        format.opaque = false
+        return UIGraphicsImageRenderer(size: size, format: format).image { context in
+            let path = UIBezierPath()
+            path.move(to: CGPoint(x: 12, y: 78))
+            path.addCurve(to: CGPoint(x: 78, y: 26),
+                          controlPoint1: CGPoint(x: 24, y: 20),
+                          controlPoint2: CGPoint(x: 52, y: 16))
+            path.addCurve(to: CGPoint(x: 104, y: 82),
+                          controlPoint1: CGPoint(x: 96, y: 36),
+                          controlPoint2: CGPoint(x: 88, y: 84))
+            path.addCurve(to: CGPoint(x: 168, y: 30),
+                          controlPoint1: CGPoint(x: 126, y: 78),
+                          controlPoint2: CGPoint(x: 140, y: 24))
+            path.addCurve(to: CGPoint(x: 208, y: 80),
+                          controlPoint1: CGPoint(x: 190, y: 34),
+                          controlPoint2: CGPoint(x: 186, y: 82))
+            path.addCurve(to: CGPoint(x: 288, y: 44),
+                          controlPoint1: CGPoint(x: 240, y: 76),
+                          controlPoint2: CGPoint(x: 262, y: 40))
+            path.lineWidth = 7
+            path.lineCapStyle = .round
+            path.lineJoinStyle = .round
+            UIColor.black.setStroke()
+            path.stroke()
+            _ = context
+        }
     }
 
     /// Draws a plausible scanned page: warm off-white stock, dark ink, ragged left margin.

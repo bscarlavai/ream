@@ -122,6 +122,13 @@ struct DocumentDetailView: View {
             .fullScreenCover(isPresented: $showingFillSign) {
                 FillSignView(document: document)
             }
+            #if DEBUG
+            .task {
+                if LaunchArgument.isPresent(LaunchArgument.showFillSign) {
+                    showingFillSign = true
+                }
+            }
+            #endif
             // `PDFView` caches by URL, and saving markups rewrites the SAME path — so
             // without an explicit nudge the viewer kept showing the pre-markup document
             // until the screen was left and re-entered.
