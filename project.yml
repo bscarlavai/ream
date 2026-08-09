@@ -45,11 +45,6 @@ targets:
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
-        UISupportedInterfaceOrientations~ipad:
-          - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationPortraitUpsideDown
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
         # Ream never uploads anything. The camera is the only sensitive
         # capability it requests, and only while a scan is in progress.
         NSCameraUsageDescription: Ream uses the camera to scan your documents. Scans never leave your device.
@@ -74,6 +69,15 @@ targets:
               - public.image
     settings:
       base:
+        # iPhone only (decided 2026-08-08). Universal meant App Review would run it on iPad,
+        # where nothing has been tested and the layouts assume a phone. Also silences Xcode's
+        # "all interface orientations must be supported", which is an iPad multitasking
+        # requirement that doesn't apply to a phone-only app.
+        #
+        # Must live on the TARGET, not in project-level `settings.base`: xcodegen writes a
+        # target-level default of "1,2" that overrides the project value, so setting it there
+        # looks right in project.yml and does nothing in the built product.
+        TARGETED_DEVICE_FAMILY: "1"
         PRODUCT_BUNDLE_IDENTIFIER: com.lavailabs.ream
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 84FW6HJMUP
@@ -92,6 +96,15 @@ targets:
       - target: Ream
     settings:
       base:
+        # iPhone only (decided 2026-08-08). Universal meant App Review would run it on iPad,
+        # where nothing has been tested and the layouts assume a phone. Also silences Xcode's
+        # "all interface orientations must be supported", which is an iPad multitasking
+        # requirement that doesn't apply to a phone-only app.
+        #
+        # Must live on the TARGET, not in project-level `settings.base`: xcodegen writes a
+        # target-level default of "1,2" that overrides the project value, so setting it there
+        # looks right in project.yml and does nothing in the built product.
+        TARGETED_DEVICE_FAMILY: "1"
         PRODUCT_BUNDLE_IDENTIFIER: com.lavailabs.ream.tests
         GENERATE_INFOPLIST_FILE: "YES"
         SWIFT_STRICT_CONCURRENCY: complete
