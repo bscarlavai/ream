@@ -18,6 +18,9 @@ struct DocumentListView: View {
     @State private var promoPayload: CrossPromoPayload?
     @State private var showingSupporterPitch = false
     @State private var importError: String?
+    @State private var labelTarget: ScannedDocument?
+    @State private var renameTarget: ScannedDocument?
+    @State private var draftTitle = ""
     /// Explicit navigation path so a detail screen can be pushed programmatically.
     /// Rows still use `NavigationLink(value:)`, so the chevron and press behaviour are
     /// unchanged — this only adds a second way in, for launch arguments.
@@ -144,6 +147,17 @@ struct DocumentListView: View {
             .sheet(isPresented: $showingSettings) {
                 SettingsView(pipeline: pipeline)
             }
+            .sheet(item: $labelTarget) { document in
+                LabelPickerView(document: document)
+            }
+            .alert("Rename scan", isPresented: Binding(
+                get: { renameTarget != nil },
+                set: { if !$0 { renameTarget = nil } }
+            )) {
+                TextField("Name", text: $draftTitle)
+                Button("Cancel", role: .cancel) { renameTarget = nil }
+                Button("Save") { commitRename() }
+            }
             .sheet(isPresented: $showingSupporterPitch) {
                 SupporterView()
             }
@@ -211,6 +225,7 @@ struct DocumentListView: View {
                 NavigationLink(value: document) {
                     DocumentRow(document: document)
                 }
+                .contextMenu { rowMenu(for: document) }
             }
             .onDelete(perform: delete)
 
@@ -309,6 +324,20 @@ struct DocumentListView: View {
     /// `Engagement` owns the review-vs-supporter decision; the cross-promo is checked only
     /// when neither fired, so a single scan can never stack a rating request, a paywall and
     /// an app recommendation on top of each other.
+    private func commitRename() {
+        guard let document = renameTarget else { return }
+        let trimmed = draftTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Guard the write so an unchanged name doesn't dirty the model and re-evaluate every
+        // @Query showing this title.
+        if !trimmed.isEmpty, trimmed != document.title {
+            document.title = trimmed
+            try? context.save()
+            LibraryManifest.rebuild(from: context)
+            refreshFilter()
+        }
+        renameTarget = nil
+    }
+
     private func showPromptIfDue() {
         switch engagement.nextPrompt(isSupporter: supporter.isSupporter) {
         case .review:
@@ -323,6 +352,39 @@ struct DocumentListView: View {
             // Marked up front so a swipe-dismiss counts the same as tapping Done.
             crossPromo.markSeen(unseen)
             promoPayload = CrossPromoPayload(siblings: unseen)
+        }
+    }
+
+    /// Long-press actions.
+    ///
+    /// The same things the detail screen offers, reachable without opening the document —
+    /// filing a stack of scans means labelling several in a row, and going in and out of each
+    /// one to do it is the slow path.
+    @ViewBuilder
+    private func rowMenu(for document: ScannedDocument) -> some View {
+        Button {
+            labelTarget = document
+        } label: {
+            Label("Labels", systemImage: "tag")
+        }
+
+        Button {
+            draftTitle = document.title
+            renameTarget = document
+        } label: {
+            Label("Rename", systemImage: "pencil")
+        }
+
+        ShareLink(item: DocumentStore.shared.url(for: document.fileName)) {
+            Label("Share", systemImage: "square.and.arrow.up")
+        }
+
+        Divider()
+
+        Button(role: .destructive) {
+            withAnimation { delete(document) }
+        } label: {
+            Label("Delete", systemImage: "trash")
         }
     }
 
@@ -342,19 +404,27 @@ struct DocumentListView: View {
     private func delete(at offsets: IndexSet) {
         let targets = offsets.map { filtered[$0] }
         withAnimation {
-            for document in targets {
-                let fileName = document.fileName
-                MarkupStore.purge(fileName: fileName, markupData: document.markupData)
-                context.delete(document)
-                Task {
-                    await DocumentStore.shared.delete(fileName: fileName)
-                    await ThumbnailService.shared.invalidate(fileName: fileName)
-                }
-            }
+            for document in targets { delete(document) }
         }
+    }
+
+    /// The single delete path.
+    ///
+    /// Swipe and the long-press menu both come through here. Two copies of this is how one of
+    /// them ends up forgetting to purge the pristine original and its drawings, leaving files
+    /// behind for a document that no longer exists.
+    private func delete(_ document: ScannedDocument) {
+        let fileName = document.fileName
+        MarkupStore.purge(fileName: fileName, markupData: document.markupData)
+        context.delete(document)
         try? context.save()
         LibraryManifest.rebuild(from: context)
         refreshFilter()
+
+        Task {
+            await DocumentStore.shared.delete(fileName: fileName)
+            await ThumbnailService.shared.invalidate(fileName: fileName)
+        }
     }
 }
 
