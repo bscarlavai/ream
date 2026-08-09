@@ -80,6 +80,21 @@ struct FillSignView: View {
                 if pageCount > 1 { pager }
             }
             .background(Theme.pageBackground)
+            #if DEBUG
+            // Temporary diagnostic. Freehand marks aren't reaching the document, and every
+            // step downstream of capture is covered by passing tests — so the question is
+            // which UI state isn't moving. This makes that answerable from one screenshot.
+            .overlay(alignment: .top) {
+                Text(debugState)
+                    .font(.caption2.monospaced())
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(.black.opacity(0.75), in: Capsule())
+                    .padding(.top, 4)
+                    .allowsHitTesting(false)
+            }
+            #endif
             .navigationTitle("Fill & Sign")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
@@ -111,6 +126,17 @@ struct FillSignView: View {
             .onChange(of: pageIndex) { _, _ in Task { await loadPage() } }
         }
     }
+
+    #if DEBUG
+    private var debugState: String {
+        let onPage = pageMarkups.count
+        let strokes = drawCanvas.drawing.strokes.count
+        return "m:\(markups.count) page:\(onPage) strokes:\(strokes) "
+            + "empty:\(drawIsEmpty ? "Y" : "N") "
+            + "canvas:\(Int(canvasSize.width))x\(Int(canvasSize.height)) "
+            + "draw:\(isDrawingMode ? "Y" : "N")"
+    }
+    #endif
 
     // MARK: - Canvas
 
