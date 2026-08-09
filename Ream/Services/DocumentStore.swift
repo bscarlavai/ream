@@ -8,29 +8,15 @@ import Foundation
 actor DocumentStore {
     static let shared = DocumentStore()
 
-    private let directory: URL
-
-    init() {
-        directory = FileManager.default
-            .urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appending(path: "Scans", directoryHint: .isDirectory)
-    }
-
-    private func ensureDirectory() throws {
-        guard !FileManager.default.fileExists(atPath: directory.path) else { return }
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    }
+    private var directory: URL { AppPaths.scans }
 
     nonisolated func url(for fileName: String) -> URL {
-        FileManager.default
-            .urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appending(path: "Scans", directoryHint: .isDirectory)
-            .appending(path: fileName)
+        AppPaths.scan(fileName)
     }
 
     func write(_ data: Data, to fileName: String) throws -> URL {
-        try ensureDirectory()
-        let target = directory.appending(path: fileName)
+        AppPaths.ensure(directory)
+        let target = AppPaths.scan(fileName)
         // .atomic so a crash mid-write can't leave a truncated PDF that SwiftData
         // still has a row pointing at.
         try data.write(to: target, options: .atomic)
@@ -38,10 +24,10 @@ actor DocumentStore {
     }
 
     func delete(fileName: String) {
-        try? FileManager.default.removeItem(at: directory.appending(path: fileName))
+        try? FileManager.default.removeItem(at: AppPaths.scan(fileName))
     }
 
     func exists(fileName: String) -> Bool {
-        FileManager.default.fileExists(atPath: directory.appending(path: fileName).path)
+        FileManager.default.fileExists(atPath: AppPaths.scan(fileName).path)
     }
 }

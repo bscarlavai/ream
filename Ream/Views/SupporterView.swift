@@ -1,5 +1,5 @@
 import SwiftUI
-import StoreKit
+import RevenueCat
 
 /// The finish picker and the Supporter unlock.
 ///
@@ -10,7 +10,7 @@ struct SupporterView: View {
     @Environment(SupporterService.self) private var supporter
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var scheme
-    @AppStorage("accentFinish") private var finishRaw = AccentFinish.blueprint.rawValue
+    @AppStorage(DefaultsKey.accentFinish) private var finishRaw = AccentFinish.blueprint.rawValue
 
     private var selected: AccentFinish {
         AccentFinish.resolved(rawValue: finishRaw, isSupporter: supporter.isSupporter)
@@ -72,23 +72,27 @@ struct SupporterView: View {
         Section {
             if supporter.isLoading {
                 ProgressView().frame(maxWidth: .infinity)
-            } else if supporter.products.isEmpty {
+            } else if supporter.packages.isEmpty {
                 Text("The App Store isn't reachable right now.")
                     .foregroundStyle(Theme.secondaryText)
             } else {
-                ForEach(supporter.products, id: \.id) { product in
+                ForEach(supporter.packages, id: \.identifier) { package in
                     Button {
-                        Task { await supporter.purchase(product) }
+                        Task { await supporter.purchase(package) }
                     } label: {
                         // A tinted title is how a native list says "this row does something"
                         // — the same shape Settings uses for its own actions. The price sits
                         // trailing as a plain value rather than inside a button, so the whole
                         // row is the tap target.
-                        ReamRow(title: product.displayName,
-                                subtitle: product.description.isEmpty ? nil : product.description,
+                        // Price comes from the store, never a hardcoded string, or every
+                        // customer outside the US is quoted dollars for a purchase in their
+                        // own currency.
+                        ReamRow(title: package.storeProduct.localizedTitle,
+                                subtitle: package.storeProduct.localizedDescription.isEmpty
+                                    ? nil : package.storeProduct.localizedDescription,
                                 systemImage: "heart.fill",
                                 iconTint: selected.fillColor(for: scheme),
-                                accessory: .value(product.displayPrice))
+                                accessory: .value(package.storeProduct.localizedPriceString))
                     }
                     .buttonStyle(.plain)
                 }

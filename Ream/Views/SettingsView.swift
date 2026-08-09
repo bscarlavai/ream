@@ -10,9 +10,9 @@ struct SettingsView: View {
     @Environment(\.requestReview) private var requestReview
 
     @Query private var documents: [ScannedDocument]
-    @AppStorage("accentFinish") private var finishRaw = AccentFinish.blueprint.rawValue
-    @AppStorage("appearanceMode") private var appearanceRaw = AppearanceMode.system.rawValue
-    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @Environment(\.accentFinish) private var finish
+    @AppStorage(DefaultsKey.appearanceMode) private var appearanceRaw = AppearanceMode.system.rawValue
+    @AppStorage(DefaultsKey.hasSeenOnboarding) private var hasSeenOnboarding = false
 
     @State private var showingFinishes = false
     @State private var showingCrossPromo = false
@@ -25,17 +25,9 @@ struct SettingsView: View {
 
     let pipeline: ScanPipeline
 
-    private var finish: AccentFinish {
-        AccentFinish.resolved(rawValue: finishRaw, isSupporter: supporter.isSupporter)
-    }
-
     private var accent: Color { finish.color(for: scheme) }
 
-    private var appVersion: String {
-        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        return "\(v) (\(b))"
-    }
+    private var appVersion: String { AppVersion.display }
 
     var body: some View {
         NavigationStack {
@@ -183,7 +175,7 @@ struct SettingsView: View {
             }
             .buttonStyle(.plain)
 
-            Link(destination: URL(string: "mailto:ream@lavailabs.com?subject=Ream%20\(appVersion)")!) {
+            Link(destination: ExternalLink.support(version: appVersion)) {
                 ReamRow(title: "Contact", systemImage: "envelope", iconTint: accent)
             }
             .buttonStyle(.plain)
@@ -205,13 +197,13 @@ struct SettingsView: View {
             ReamRow(title: "Version", systemImage: "info.circle",
                     iconTint: accent, accessory: .value(appVersion))
 
-            Link(destination: URL(string: "https://lavailabs.com/ream/privacy")!) {
+            Link(destination: ExternalLink.privacy) {
                 ReamRow(title: "Privacy Policy", systemImage: "hand.raised",
                         iconTint: accent, accessory: .chevron)
             }
             .buttonStyle(.plain)
 
-            Link(destination: URL(string: "https://lavailabs.com/ream/terms")!) {
+            Link(destination: ExternalLink.terms) {
                 ReamRow(title: "Terms of Use", systemImage: "doc.text",
                         iconTint: accent, accessory: .chevron)
             }

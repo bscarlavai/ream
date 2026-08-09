@@ -20,10 +20,18 @@ settings:
     ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: "YES"
     STRING_CATALOG_GENERATE_SYMBOLS: "YES"
 
+packages:
+  RevenueCat:
+    url: https://github.com/RevenueCat/purchases-ios
+    from: "5.0.0"
+
 targets:
   Ream:
     type: application
     platform: iOS
+    dependencies:
+      - package: RevenueCat
+        product: RevenueCat
     sources:
       - path: Ream
         excludes:

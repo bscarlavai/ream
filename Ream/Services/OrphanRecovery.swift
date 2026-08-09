@@ -30,12 +30,10 @@ enum OrphanRecovery {
     static func run(in context: ModelContext) -> Result {
         var result = Result(adopted: 0, withMetadata: 0, needsOCR: [])
 
-        let scansDirectory = FileManager.default
-            .urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appending(path: "Scans", directoryHint: .isDirectory)
-
+        // Not recursive, which is what keeps `originals/` out of it — those are copies of
+        // documents that already have rows, and adopting them would duplicate the library.
         guard let files = try? FileManager.default.contentsOfDirectory(
-            at: scansDirectory, includingPropertiesForKeys: nil
+            at: AppPaths.scans, includingPropertiesForKeys: nil
         ) else { return result }
 
         let pdfs = files.filter { $0.pathExtension.lowercased() == "pdf" }

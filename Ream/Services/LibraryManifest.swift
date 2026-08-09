@@ -37,12 +37,9 @@ struct LibraryManifest: Codable {
     static let fileName = "manifest.json"
 
     /// The live location. Tests pass an explicit directory instead — see `rebuild(from:in:)`.
-    static var scansDirectory: URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appending(path: "Scans", directoryHint: .isDirectory)
-    }
+    static var scansDirectory: URL { AppPaths.scans }
 
-    static var url: URL { scansDirectory.appending(path: fileName) }
+    static var url: URL { AppPaths.manifest }
 
     // MARK: - IO
 

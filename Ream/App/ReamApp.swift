@@ -49,11 +49,11 @@ private struct RootView: View {
     let quarantinedStore: URL?
 
     @Environment(\.modelContext) private var context
-    @AppStorage("appearanceMode") private var appearanceRaw = AppearanceMode.system.rawValue
+    @AppStorage(DefaultsKey.appearanceMode) private var appearanceRaw = AppearanceMode.system.rawValue
 
     @Query private var documents: [ScannedDocument]
     @State private var recoveryNotice: String?
-    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @AppStorage(DefaultsKey.hasSeenOnboarding) private var hasSeenOnboarding = false
     @State private var showingOnboarding = false
 
     private var appearance: AppearanceMode {
@@ -117,7 +117,7 @@ private struct RootView: View {
 private struct TintedRoot: View {
     @Environment(\.colorScheme) private var scheme
     @Environment(SupporterService.self) private var supporter
-    @AppStorage("accentFinish") private var finishRaw = AccentFinish.blueprint.rawValue
+    @AppStorage(DefaultsKey.accentFinish) private var finishRaw = AccentFinish.blueprint.rawValue
 
     private var finish: AccentFinish {
         AccentFinish.resolved(rawValue: finishRaw, isSupporter: supporter.isSupporter)
@@ -126,5 +126,8 @@ private struct TintedRoot: View {
     var body: some View {
         DocumentListView()
             .tint(finish.color(for: scheme))
+            // Resolved here and read everywhere else, rather than six views each repeating
+            // the entitlement check.
+            .environment(\.accentFinish, finish)
     }
 }

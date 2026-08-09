@@ -28,18 +28,13 @@ enum BackupArchive {
         }
     }
 
-    private static var scansDirectory: URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appending(path: "Scans", directoryHint: .isDirectory)
-    }
-
     /// Zips the scans folder and returns a temp URL suitable for `ShareLink`.
     ///
     /// Uses `NSFileCoordinator`'s `.forUploading` option, which is the only zip facility in
     /// the SDK that doesn't require a third-party archiver. The URL it hands back is valid
     /// **only inside the coordination block**, so the file is copied out before returning.
     static func exportAll() throws -> URL {
-        let source = scansDirectory
+        let source = AppPaths.scans
         guard let contents = try? FileManager.default.contentsOfDirectory(atPath: source.path),
               !contents.isEmpty else {
             throw ArchiveError.nothingToExport

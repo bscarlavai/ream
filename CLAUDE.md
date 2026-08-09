@@ -229,7 +229,17 @@ layer — it makes search a `@Query` predicate instead of parsing every PDF per 
 
 ## Monetization
 
-`SupporterService`, StoreKit 2. **Three tiers, identical entitlement, all NON-CONSUMABLE:**
+`SupporterService`, **RevenueCat** (matching PokeArtist and the -rip family). ⚠️ The API key
+in `SupporterService.apiKey` is a placeholder — replace it with Ream's own public `appl_` key
+or offerings resolve empty and no tiers appear. Entitlement identifier is `Supporter`,
+case-sensitive; if it disagrees with the dashboard every supporter silently becomes a
+non-supporter.
+
+Source of truth is `CustomerInfo`, never local storage. The owned-products fallback after the
+entitlement check is NOT redundant: an entitlement that hasn't propagated would otherwise lock
+out someone who has already paid.
+
+**Three tiers, identical entitlement, all NON-CONSUMABLE:**
 `…supporter` ($2.99), `…supporter.plus` ($4.99), `…supporter.max` ($9.99).
 
 Three rather than two for **anchoring** — the top tier's job is not to be bought, it's to
@@ -318,6 +328,26 @@ blues: `#1268B0` pops hardest and lands at 4.05:1 glassed.
   `.preferredColorScheme` on `RootView`. The tint is resolved in a **child** (`TintedRoot`):
   `.preferredColorScheme` affects the subtree *below* it, so reading `\.colorScheme` in the
   same view that sets it returns the previous value and the accent lags one toggle behind.
+
+## Single sources of truth
+
+Repeated literals are a rename waiting to break silently, so these each live in exactly one
+place. Adding a fifth copy of any of them is the regression:
+
+- **`AppPaths`** — every on-disk location. `Documents/Scans` used to be rebuilt inline in five
+  files; drift there is silent and nasty (recovery scanning a folder nothing writes to, an
+  export zipping the wrong directory).
+- **`DefaultsKey`** — `@AppStorage` keys. Change a raw string in four views and miss the
+  fifth, and that view reads a key nothing writes.
+- **`ExternalLink`** — privacy, terms, support mailto, App Store URLs.
+- **`LaunchArgument`** (DEBUG) — the simulator flags.
+- **`AppVersion.display`** — the one place Info.plist version keys are read.
+- **`\.accentFinish` environment value** — the finish, already resolved against entitlement.
+  Six views each used to read `@AppStorage`, pull in `SupporterService` and re-run
+  `AccentFinish.resolved(...)`. One of them getting it wrong is exactly the bug that let a
+  locked finish stay applied after a refund.
+- **`Theme` / `AccentFinish` / `MarkupInk`** — all colours, spacing and radii.
+- **`ReamRow` / `.reamProminent()`** — row and prominent-button styling.
 
 ## Lists and rows — one idiom, no exceptions
 

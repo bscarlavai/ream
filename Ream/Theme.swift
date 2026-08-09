@@ -198,15 +198,11 @@ enum AppearanceMode: String, CaseIterable, Codable, Sendable {
 /// scan button illegible.
 private struct ReamProminent: ViewModifier {
     @Environment(\.colorScheme) private var scheme
-    @Environment(SupporterService.self) private var supporter
-    @AppStorage("accentFinish") private var finishRaw = AccentFinish.blueprint.rawValue
+    @Environment(\.accentFinish) private var finish
 
     var glass: Bool
 
-    private var tint: Color {
-        AccentFinish.resolved(rawValue: finishRaw, isSupporter: supporter.isSupporter)
-            .fillColor(for: scheme)
-    }
+    private var tint: Color { finish.fillColor(for: scheme) }
 
     func body(content: Content) -> some View {
         Group {
@@ -225,5 +221,25 @@ extension View {
     /// in-content buttons.
     func reamProminent(glass: Bool = false) -> some View {
         modifier(ReamProminent(glass: glass))
+    }
+}
+
+// MARK: - Environment
+
+private struct AccentFinishKey: EnvironmentKey {
+    static let defaultValue = AccentFinish.blueprint
+}
+
+extension EnvironmentValues {
+    /// The finish in force, already resolved against entitlement.
+    ///
+    /// Six views each read `@AppStorage("accentFinish")`, pulled in `SupporterService` and
+    /// called `AccentFinish.resolved(...)` for themselves. That's the same three-line decision
+    /// repeated six times — and one of them getting it wrong is exactly the bug that let a
+    /// locked finish stay applied after a refund. Resolved once at the root; everywhere else
+    /// just reads it.
+    var accentFinish: AccentFinish {
+        get { self[AccentFinishKey.self] }
+        set { self[AccentFinishKey.self] = newValue }
     }
 }

@@ -188,14 +188,14 @@ struct DocumentListView: View {
             //   --show-settings  open Settings directly
             //   --show-detail    push the newest document's detail screen
             .task {
-                let args = ProcessInfo.processInfo.arguments
-                if args.contains("--seed-samples"), documents.isEmpty {
+                if LaunchArgument.isPresent(LaunchArgument.seedSamples), documents.isEmpty {
                     await SampleScans.generate(into: context, pipeline: pipeline)
                 }
-                if args.contains("--show-settings") {
+                if LaunchArgument.isPresent(LaunchArgument.showSettings) {
                     showingSettings = true
                 }
-                if args.contains("--show-detail"), let first = documents.first {
+                if LaunchArgument.isPresent(LaunchArgument.showDetail),
+                   let first = documents.first {
                     path.append(first)
                 }
             }

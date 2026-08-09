@@ -15,7 +15,7 @@ struct SiblingApp: Identifiable {
     let appStoreID: String
 
     var id: String { key }
-    var appStoreURL: URL? { URL(string: "https://apps.apple.com/app/id\(appStoreID)") }
+    var appStoreURL: URL? { ExternalLink.appStore(id: appStoreID) }
 }
 
 extension SiblingApp {

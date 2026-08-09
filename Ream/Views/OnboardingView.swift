@@ -13,8 +13,7 @@ import SwiftUI
 struct OnboardingView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var scheme
-    @Environment(SupporterService.self) private var supporter
-    @AppStorage("accentFinish") private var finishRaw = AccentFinish.blueprint.rawValue
+    @Environment(\.accentFinish) private var finish
 
     @State private var page = 0
 
@@ -22,16 +21,9 @@ struct OnboardingView: View {
     /// `--onboarding-page N` jumps straight to a card. The Simulator can't swipe a TabView
     /// from the command line, so without this only the first card is ever reachable.
     private static var debugStartPage: Int {
-        let args = ProcessInfo.processInfo.arguments
-        guard let index = args.firstIndex(of: "--onboarding-page"),
-              args.count > index + 1, let page = Int(args[index + 1]) else { return 0 }
-        return page
+        LaunchArgument.intValue(after: LaunchArgument.onboardingPage) ?? 0
     }
     #endif
-
-    private var finish: AccentFinish {
-        AccentFinish.resolved(rawValue: finishRaw, isSupporter: supporter.isSupporter)
-    }
 
     private var accent: Color { finish.color(for: scheme) }
     private var accentFill: Color { finish.fillColor(for: scheme) }
