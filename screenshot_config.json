@@ -38,6 +38,11 @@
       "filename": "05_finishes.png",
       "headline": "Make It *Yours*",
       "subheadline": "An optional tip unlocks four more finishes. Everything else is free"
+    },
+    {
+      "filename": "06_export.png",
+      "headline": "*Export* Everything, Anytime",
+      "subheadline": "A ZIP of plain PDFs. No account, no cloud, no lock-in"
     }
   ]
 }

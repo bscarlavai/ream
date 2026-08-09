@@ -269,6 +269,30 @@ export feature — the free tier is the whole product.
 Apple requires this to go through IAP; an external "buy me a coffee" link is a 3.1.1
 rejection. Commission is 15% under the Small Business Program.
 
+## Privacy manifest
+
+`Ream/PrivacyInfo.xcprivacy`, shipped at the `.app` root. RevenueCat's manifest lives in its
+own bundle and covers only the SDK — required-reason APIs called by *app* code need declaring
+here, or the upload earns an ITMS-91053 "Missing API declaration" email.
+
+Ream hits exactly one category: **UserDefaults** (`@AppStorage`, nine files), reason `CA92.1`
+(app's own data, not shared with an app group, extension, or another developer's app). Swept
+and found none of the others: no file-timestamp APIs, no disk-space APIs, no boot time, no
+active keyboards. **Re-run that sweep before adding a dependency or touching file I/O.**
+
+⚠️ `NSPrivacyCollectedDataTypes` is deliberately **empty**, and is NOT the same thing as the
+App Store Connect answers. Ream transmits nothing itself. What appears on the product page
+(Purchase History) comes from RevenueCat's manifest. Mirroring the ASC answers into this file
+would have the app claim to collect data it never touches.
+
+**App Store Connect → App Privacy** (sourced to RevenueCat's own guidance, not their manifest,
+which understates it): Purchases → Purchase History, purposes **Analytics *and* App
+Functionality** — Analytics is required of every RevenueCat app for Customer History, Charts
+and Experiments. Not linked to identity (anonymous app user IDs; Ream never calls `logIn`),
+not used for tracking. No Identifiers, no Usage Data: `User ID` applies only with custom app
+user IDs, and `Product Interaction` only with an analytics SDK (Mixpanel, Firebase, PostHog,
+Amplitude) — Ream has neither.
+
 ## Labels
 
 `ScanLabel` — named that, **not `Label`**, because SwiftUI owns that name and the collision

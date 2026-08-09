@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Ream's own privacy manifest.
+
+  RevenueCat ships its own manifest inside RevenueCat_RevenueCat.bundle, but an SDK's
+  manifest covers only that SDK. Required-reason APIs called by app code need declaring
+  here or the upload earns an ITMS-91053 "Missing API declaration" email.
+
+  Ream calls exactly one required-reason category: UserDefaults, via @AppStorage in nine
+  files. Swept for the others and found none — no file-timestamp APIs (creationDate,
+  attributesOfItem, stat), no disk-space APIs, no system boot time, no active keyboards.
+  Re-run that sweep before adding a dependency or touching file I/O.
+
+  NSPrivacyCollectedDataTypes is deliberately EMPTY. Ream itself transmits nothing: no
+  URLSession, no analytics SDK, no accounts, and scans never leave the device. The
+  Purchase History that appears on the App Store product page comes from RevenueCat's
+  manifest, not this one. Do not mirror the App Store Connect answers here — the two
+  are different artifacts and duplicating them means the app claims to collect data it
+  never touches.
+-->
+<plist version="1.0">
+<dict>
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<!--
+				  CA92.1 — access info from the app itself, and only the app itself.
+				  Ream's defaults are the appearance override, the accent finish, the
+				  onboarding flag and the engagement counters. Nothing is shared with an
+				  app group, an extension, or another developer's app, which is what the
+				  other reason codes (1C8F.1, C56D.1, AC6B.1) exist to cover.
+				-->
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
