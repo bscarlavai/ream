@@ -71,6 +71,31 @@ struct DrawingCaptureTests {
         #expect(try hasInk(restored))
     }
 
+    /// A freehand mark commits as ONE image tinted a single colour, so a canvas showing two
+    /// colours is lying about the result. Recolouring is what makes the canvas honest.
+    @Test("Recolouring a drawing changes every stroke, not just new ones")
+    func recolouringAffectsExistingStrokes() throws {
+        let first = makeDrawing(at: CGPoint(x: 20, y: 20))
+        let second = makeDrawing(at: CGPoint(x: 20, y: 60))
+        let mixed = PKDrawing(strokes: first.strokes + second.strokes)
+        #expect(mixed.strokes.count == 2)
+
+        let target = MarkupInk.blue.uiColor
+        let recoloured = PKDrawing(strokes: mixed.strokes.map { stroke -> PKStroke in
+            var copy = stroke
+            copy.ink = PKInk(stroke.ink.inkType, color: target)
+            return copy
+        })
+
+        // Every stroke, including the one drawn before the colour changed.
+        #expect(recoloured.strokes.count == 2)
+        for stroke in recoloured.strokes {
+            var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+            stroke.ink.color.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+            #expect(blue > red, "A stroke kept its original colour after a recolour.")
+        }
+    }
+
     @Test("Tinting the capture keeps it visible")
     func tintedCaptureStaysVisible() throws {
         let drawing = makeDrawing()

@@ -44,12 +44,36 @@ struct PageDrawingCanvas: UIViewRepresentable {
         // Live colour change: the stroke you're drawing is the colour it will be, because
         // here the surface underneath is the actual page.
         view.tool = PKInkingTool(.pen, color: ink.uiColor, width: 5)
+
+        // **Recolour strokes already on the canvas, not just the next one.**
+        //
+        // A freehand mark is committed as ONE image tinted a single colour, so a canvas
+        // showing black strokes and blue strokes is lying: everything turns the last colour
+        // on commit. Changing them as you go makes the canvas honest about what you'll get,
+        // rather than surprising you at the end.
+        //
+        // Gated on the coordinator's remembered ink rather than comparing UIColors —
+        // PencilKit stores an adapted colour, so a colour comparison can be true forever and
+        // recolouring on every update would fight the delegate that reacts to it.
+        guard context.coordinator.appliedInk != ink else { return }
+        context.coordinator.appliedInk = ink
+
+        guard !view.drawing.strokes.isEmpty else { return }
+        let recoloured = view.drawing.strokes.map { stroke -> PKStroke in
+            var copy = stroke
+            copy.ink = PKInk(stroke.ink.inkType, color: ink.uiColor)
+            return copy
+        }
+        view.drawing = PKDrawing(strokes: recoloured)
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(isEmpty: $isEmpty) }
 
     final class Coordinator: NSObject, PKCanvasViewDelegate {
         private let isEmpty: Binding<Bool>
+        /// Last ink pushed to the canvas, so a recolour happens once per change.
+        var appliedInk: MarkupInk?
+
         init(isEmpty: Binding<Bool>) { self.isEmpty = isEmpty }
 
         func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
