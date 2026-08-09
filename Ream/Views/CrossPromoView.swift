@@ -22,7 +22,7 @@ extension SiblingApp {
     static let perennial = SiblingApp(
         key: "perennial",
         name: "Perennial",
-        tagline: "Birthday and anniversary reminders.",
+        tagline: "Birthday, anniversary and memorial reminders.",
         iconAsset: "PerennialIcon",
         fallbackSymbol: "calendar.badge.clock",
         appStoreID: "6760379132"
@@ -88,7 +88,13 @@ struct CrossPromoView: View {
                 } header: {
                     Text("More from Lavai Labs")
                 } footer: {
-                    Text("Same maker, same deal: no subscriptions, no ads.")
+                    // Says nothing about how the other apps are priced.
+                    //
+                    // This read "same deal: no subscriptions, no ads", which is a claim about
+                    // apps this one doesn't control — and a false one: Unfrozen runs AI and
+                    // charges a subscription for it. Ream's own terms are stated in Ream,
+                    // where they're true.
+                    Text("Small, focused apps. Tap one to open it on the App Store.")
                 }
             }
             .navigationTitle("More Apps")
