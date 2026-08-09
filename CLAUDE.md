@@ -126,6 +126,16 @@ Editor positions markups against a rasterized preview; saving re-renders from th
 original. Markups are stored **normalized to the page**, since those two coordinate spaces
 differ.
 
+**Markups are editable, not welded in.** `MarkupStore` keeps two files per marked-up
+document: `Scans/<id>.pdf` (flattened — what the viewer, thumbnails, share, search and
+export all read, unchanged) and `Scans/originals/<id>.pdf` (the pristine scan, written once
+before the first flatten). ⚠️ **Every save re-renders from the ORIGINAL**, never from the
+current file, or edits compound: moving a signature twice would leave a ghost at the first
+position. Markup metadata lives on `ScannedDocument.markupData` and in the manifest;
+drawings are PNGs in `Scans/markups/`. Both directories are inside `Scans/`, so the export
+ZIP carries them and a restored backup gets **editable** markups rather than a flat page.
+Deleting a document must call `MarkupStore.purge` or the original and its drawings outlive it.
+
 ⚠️ **Gesture note:** the editor uses ONE `DragGesture(minimumDistance: 0)` for touch-down,
 drag and tap. A separate `.onTapGesture` plus a distance-gated drag meant the tap could only
 be recognised after the drag declined the touch, so nothing acknowledged the finger until it

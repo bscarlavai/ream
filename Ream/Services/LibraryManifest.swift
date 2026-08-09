@@ -20,6 +20,10 @@ struct LibraryManifest: Codable {
         var pageCount: Int
         var transcript: String
         var labels: [Label]
+        /// Applied markups, so a restored backup can still EDIT them rather than inheriting
+        /// a flattened page. The drawings they reference live in `Scans/markups/`, which is
+        /// inside the exported ZIP for the same reason this file is.
+        var markups: [MarkupStore.Stored]?
 
         struct Label: Codable {
             var name: String
@@ -68,6 +72,9 @@ struct LibraryManifest: Codable {
                   transcript: document.transcript,
                   labels: (document.labels ?? []).map {
                       Entry.Label(name: $0.name, colorIndex: $0.colorIndex)
+                  },
+                  markups: document.markupData.flatMap {
+                      try? JSONDecoder().decode([MarkupStore.Stored].self, from: $0)
                   })
         })
 

@@ -291,7 +291,10 @@ struct SettingsView: View {
 
     private func deleteAll() {
         let fileNames = documents.map(\.fileName)
-        for document in documents { context.delete(document) }
+        for document in documents {
+            MarkupStore.purge(fileName: document.fileName, markupData: document.markupData)
+            context.delete(document)
+        }
         try? context.save()
 
         // Every local copy, as one operation. Snapshots and any quarantined store are full

@@ -65,7 +65,9 @@ struct FillSignView: View {
     @State private var suggestions: [FieldSuggester.Suggestion] = []
     @State private var showSuggestions = true
 
-    private var fileURL: URL { DocumentStore.shared.url(for: document.fileName) }
+    /// The pristine scan. Every render starts here, so re-saving can't compound: moving a
+    /// signature twice must not leave a ghost of where it was first flattened.
+    private var sourceURL: URL { MarkupStore.sourceURL(for: document.fileName) }
 
     private var pageMarkups: [PageMarkup] {
         markups.filter { $0.pageIndex == pageIndex }
@@ -98,7 +100,14 @@ struct FillSignView: View {
                 else { return }
                 markups[index].ink = newInk
             }
-            .task { await loadPage() }
+            .task {
+                // Restore whatever was applied last time, so this is an edit and not a
+                // fresh start on a page that already has your text welded to it.
+                if markups.isEmpty {
+                    markups = MarkupStore.decode(document.markupData)
+                }
+                await loadPage()
+            }
             .onChange(of: pageIndex) { _, _ in Task { await loadPage() } }
         }
     }
@@ -367,7 +376,9 @@ struct FillSignView: View {
         }
         ToolbarItem(placement: .topBarTrailing) {
             Button("Save") { save() }
-                .disabled(markups.isEmpty || isSaving)
+                // Enabled with zero markups on purpose: removing them all and saving is how
+                // you get the clean scan back.
+                .disabled(isSaving)
         }
     }
 
@@ -505,11 +516,11 @@ struct FillSignView: View {
     // MARK: - Actions
 
     private func loadPage() async {
-        if let document = PDFDocument(url: fileURL) {
+        if let document = PDFDocument(url: sourceURL) {
             pageCount = max(document.pageCount, 1)
         }
         // Rendered at a fixed generous width; SwiftUI scales it to fit.
-        preview = MarkupRenderer.pagePreview(pdfAt: fileURL, pageIndex: pageIndex, width: 1200)
+        preview = MarkupRenderer.pagePreview(pdfAt: sourceURL, pageIndex: pageIndex, width: 1200)
         await loadSuggestions()
     }
 
@@ -617,7 +628,11 @@ struct FillSignView: View {
 
     private func save() {
         isSaving = true
-        guard let data = MarkupRenderer.render(pdfAt: fileURL, markups: markups) else {
+        // Take a copy of the untouched scan before the first flatten. After this the main
+        // file is derived and the original is the source of record.
+        MarkupStore.preserveOriginalIfNeeded(fileName: document.fileName)
+
+        guard let data = MarkupRenderer.render(pdfAt: sourceURL, markups: markups) else {
             isSaving = false
             return
         }
@@ -631,6 +646,8 @@ struct FillSignView: View {
                 return
             }
             await MainActor.run {
+                document.markupData = MarkupStore.encode(markups)
+                try? context.save()
                 LibraryManifest.rebuild(from: context)
                 isSaving = false
                 dismiss()

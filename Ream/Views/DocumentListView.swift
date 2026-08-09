@@ -344,6 +344,7 @@ struct DocumentListView: View {
         withAnimation {
             for document in targets {
                 let fileName = document.fileName
+                MarkupStore.purge(fileName: fileName, markupData: document.markupData)
                 context.delete(document)
                 Task {
                     await DocumentStore.shared.delete(fileName: fileName)

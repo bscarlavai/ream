@@ -25,6 +25,12 @@ final class ScannedDocument {
     /// recognition pass still yields a valid PDF — it just isn't searchable.
     var isSearchable: Bool = false
 
+    /// Markups applied in Fill & Sign, encoded by `MarkupStore`.
+    ///
+    /// Held so the editor can restore them. Without it, saving welds markups into the page
+    /// and a typo can only be fixed by re-scanning.
+    var markupData: Data?
+
     /// Categories this document is filed under. Many-to-many; see `ScanLabel`.
     ///
     /// Optional and un-defaulted because SwiftData requires relationships to be nullable,

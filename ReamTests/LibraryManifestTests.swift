@@ -75,12 +75,13 @@ struct LibraryManifestTests {
     func manifestCoversKnownFields() throws {
         let covered: Set<String> = [
             "title", "createdAt", "pageCount", "transcript", "labels", "fileName",
+            "markupData",
         ]
         // `id` is encoded in `fileName`; `isSearchable` is derived from `transcript`.
         let derivedOrEncoded: Set<String> = ["id", "isSearchable"]
 
         let all = covered.union(derivedOrEncoded)
-        #expect(all.count == 8, """
+        #expect(all.count == 9, """
             ScannedDocument's field list changed. Add the new field to LibraryManifest.Entry \
             (and to `covered` here), or to `derivedOrEncoded` if it can be reconstructed.
             """)

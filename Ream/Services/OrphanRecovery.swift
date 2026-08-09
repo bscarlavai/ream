@@ -72,6 +72,8 @@ enum OrphanRecovery {
                                                pageCount: entry.pageCount,
                                                transcript: entry.transcript)
                 document.createdAt = entry.createdAt
+                // Markups come back editable, not just as whatever was flattened into the PDF.
+                document.markupData = entry.markups.flatMap { try? JSONEncoder().encode($0) }
                 document.labels = entry.labels.map { spec in
                     if let existing = labelsByName[spec.name.lowercased()] { return existing }
                     let created = ScanLabel(name: spec.name, colorIndex: spec.colorIndex)
