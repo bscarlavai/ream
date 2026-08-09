@@ -80,21 +80,6 @@ struct FillSignView: View {
                 if pageCount > 1 { pager }
             }
             .background(Theme.pageBackground)
-            #if DEBUG
-            // Temporary diagnostic. Freehand marks aren't reaching the document, and every
-            // step downstream of capture is covered by passing tests — so the question is
-            // which UI state isn't moving. This makes that answerable from one screenshot.
-            .overlay(alignment: .top) {
-                Text(debugState)
-                    .font(.caption2.monospaced())
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(.black.opacity(0.75), in: Capsule())
-                    .padding(.top, 4)
-                    .allowsHitTesting(false)
-            }
-            #endif
             .navigationTitle("Fill & Sign")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
@@ -126,17 +111,6 @@ struct FillSignView: View {
             .onChange(of: pageIndex) { _, _ in Task { await loadPage() } }
         }
     }
-
-    #if DEBUG
-    private var debugState: String {
-        let onPage = pageMarkups.count
-        let strokes = drawCanvas.drawing.strokes.count
-        return "m:\(markups.count) page:\(onPage) strokes:\(strokes) "
-            + "empty:\(drawIsEmpty ? "Y" : "N") "
-            + "canvas:\(Int(canvasSize.width))x\(Int(canvasSize.height)) "
-            + "draw:\(isDrawingMode ? "Y" : "N")"
-    }
-    #endif
 
     // MARK: - Canvas
 
@@ -395,16 +369,24 @@ struct FillSignView: View {
         bottomBarContent
     }
 
+    /// Hidden entirely while drawing.
+    ///
+    /// Save and the drawing's own commit button were on screen together, one saving the
+    /// DOCUMENT and one committing the STROKE — and tapping Save first silently discarded
+    /// whatever had just been drawn. Two commit actions with different scopes, no way to tell
+    /// them apart. While drawing there is now exactly one way forward.
     @ToolbarContentBuilder
     private var topBarContent: some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) {
-            Button("Cancel") { dismiss() }
-        }
-        ToolbarItem(placement: .topBarTrailing) {
-            Button("Save") { save() }
-                // Enabled with zero markups on purpose: removing them all and saving is how
-                // you get the clean scan back.
-                .disabled(isSaving)
+        if !isDrawingMode {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Cancel") { dismiss() }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Save") { save() }
+                    // Enabled with zero markups on purpose: removing them all and saving is
+                    // how you get the clean scan back.
+                    .disabled(isSaving)
+            }
         }
     }
 
@@ -435,7 +417,9 @@ struct FillSignView: View {
             Button {
                 withAnimation { commitDrawing() }
             } label: {
-                Label("Done", systemImage: "checkmark")
+                // "Add", not "Done": it adds the strokes as a markup you can still move and
+                // recolour. "Done" read as "finish and save", which is what Save does.
+                Label("Add", systemImage: "checkmark")
             }
             .disabled(drawIsEmpty)
         }
@@ -659,6 +643,10 @@ struct FillSignView: View {
     }
 
     private func save() {
+        // Nothing should be able to reach here mid-drawing now that Save is hidden, but if
+        // some future path does, unsaved strokes are kept rather than dropped on the floor.
+        if isDrawingMode { commitDrawing() }
+
         isSaving = true
         // Take a copy of the untouched scan before the first flatten. After this the main
         // file is derived and the original is the source of record.
