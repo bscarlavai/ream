@@ -157,7 +157,7 @@ final class SupporterService {
             isSupporter = true
             return
         }
-        let owned = Set(info.nonSubscriptionTransactions.map(\.productIdentifier))
+        let owned = Set(info.nonSubscriptions.map(\.productIdentifier))
         isSupporter = Tier.allCases.contains { owned.contains($0.rawValue) }
     }
 }
