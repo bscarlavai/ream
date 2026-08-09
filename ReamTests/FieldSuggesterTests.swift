@@ -73,14 +73,52 @@ struct FieldSuggesterTests {
         #expect(result.isEmpty)
     }
 
-    @Test("Overlapping suggestions on one line collapse to the leftmost")
-    func overlappingSuggestionsDedupe() {
+    @Test("Two labels on one line give two fields that don't overlap")
+    func sideBySideLabelsBothSuggested() throws {
         let result = FieldSuggester.suggestions(from: page([
             ("Name:", 0.05, 0.2, 0.10),
-            ("Date:", 0.30, 0.2, 0.10),
+            ("Date:", 0.45, 0.2, 0.10),
         ]))
-        // Both extend to the right margin, so they'd otherwise stack two targets on one line.
-        #expect(result.count == 1)
+
+        // Both are real fields and both should be offered. This previously collapsed to one,
+        // because each ran to the right margin and swallowed the other — dedupe was papering
+        // over the missing clip rather than resolving a genuine conflict.
+        #expect(result.count == 2)
+
+        let sorted = result.sorted { $0.origin.x < $1.origin.x }
+        let first = try #require(sorted.first)
+        let second = try #require(sorted.last)
+        #expect(first.origin.x + first.widthFraction <= second.origin.x)
+    }
+
+    /// The failure seen on a real receipt: every label already had its answer printed beside
+    /// it, and each one still drew a target across the page.
+    @Test("A label whose blank is already filled is not suggested")
+    func filledFieldIsNotSuggested() {
+        let result = FieldSuggester.suggestions(from: page([
+            ("Payment Term", 0.10, 0.20, 0.14),
+            ("Due Upon Receipt", 0.26, 0.20, 0.20),   // the answer, already printed
+        ]))
+        #expect(result.isEmpty)
+    }
+
+    @Test("A suggestion stops at the next text on its line, not the margin")
+    func suggestionIsClippedByNeighbouringText() throws {
+        let result = FieldSuggester.suggestions(from: page([
+            ("Name:", 0.05, 0.20, 0.08),
+            ("Job Address", 0.60, 0.20, 0.15),
+        ]))
+        let suggestion = try #require(result.first)
+        // Unclipped this ran to 0.92 and swallowed the neighbouring column, which is how the
+        // targets ended up drawn on top of each other.
+        #expect(suggestion.origin.x + suggestion.widthFraction <= 0.60)
+    }
+
+    @Test("A genuinely empty label still gets a suggestion")
+    func emptyFieldIsStillSuggested() {
+        // Nothing to the right, so the blank is real. The occupancy check must not be so
+        // strict that it kills the actual use case.
+        #expect(FieldSuggester.suggestions(from: page([("Name:", 0.05, 0.2, 0.08)])).count == 1)
     }
 
     @Test("An empty page yields nothing rather than failing")

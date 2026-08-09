@@ -62,8 +62,6 @@ struct FillSignView: View {
 
     private static let fontRange: ClosedRange<CGFloat> = 0.008...0.10
     private static let widthRange: ClosedRange<CGFloat> = 0.05...0.95
-    @State private var suggestions: [FieldSuggester.Suggestion] = []
-    @State private var showSuggestions = true
 
     /// The pristine scan. Every render starts here, so re-saving can't compound: moving a
     /// signature twice must not leave a ghost of where it was first flattened.
@@ -132,7 +130,6 @@ struct FillSignView: View {
                                     }
                             }
                         )
-                        .overlay { suggestionLayer }
                         .overlay { markupLayer.allowsHitTesting(!isDrawingMode) }
                         .overlay { drawingLayer }
                         .contentShape(Rectangle())
@@ -155,32 +152,6 @@ struct FillSignView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(Theme.Spacing.medium)
             .frame(width: geometry.size.width, height: geometry.size.height)
-        }
-    }
-
-    /// Faint targets over the blanks Vision's text boxes imply. Tapping one drops a text
-    /// markup exactly there, already sized to the line.
-    @ViewBuilder
-    private var suggestionLayer: some View {
-        if showSuggestions, !suggestions.isEmpty {
-            ZStack(alignment: .topLeading) {
-                ForEach(suggestions) { suggestion in
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(.tint.opacity(0.12))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 4)
-                                .strokeBorder(.tint.opacity(0.45),
-                                              style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
-                        }
-                        .frame(width: suggestion.widthFraction * canvasSize.width,
-                               height: max(suggestion.fontFraction * canvasSize.height * 1.8, 22))
-                        .offset(x: suggestion.origin.x * canvasSize.width,
-                                y: suggestion.origin.y * canvasSize.height)
-                        .onTapGesture { fill(suggestion) }
-                        .accessibilityLabel("Fill field after \(suggestion.label)")
-                }
-            }
-            .frame(width: canvasSize.width, height: canvasSize.height, alignment: .topLeading)
         }
     }
 
@@ -463,17 +434,6 @@ struct FillSignView: View {
 
     @ToolbarContentBuilder
     private var optionsBarContent: some ToolbarContent {
-        if !suggestions.isEmpty {
-            ToolbarSpacer(.fixed, placement: .bottomBar)
-            ToolbarItem(placement: .bottomBar) {
-                Button {
-                    withAnimation { showSuggestions.toggle() }
-                } label: {
-                    Label("Fields", systemImage: showSuggestions
-                          ? "rectangle.dashed" : "rectangle.dashed.and.paperclip")
-                }
-            }
-        }
         ToolbarSpacer(.fixed, placement: .bottomBar)
         ToolbarItem(placement: .bottomBar) { inkMenu }
         ToolbarSpacer(.flexible, placement: .bottomBar)
@@ -531,33 +491,6 @@ struct FillSignView: View {
         }
         // Rendered at a fixed generous width; SwiftUI scales it to fit.
         preview = MarkupRenderer.pagePreview(pdfAt: sourceURL, pageIndex: pageIndex, width: 1200)
-        await loadSuggestions()
-    }
-
-    /// Re-runs OCR for line boxes.
-    ///
-    /// The transcript is stored on the document but the per-line RECTANGLES are not, and
-    /// positions are the entire point here. A page costs ~200ms, which is unnoticeable
-    /// against opening an editor, and it avoids growing the schema for data used on one
-    /// screen.
-    private func loadSuggestions() async {
-        suggestions = []
-        guard let cgImage = preview?.cgImage,
-              let page = try? await OCRService.recognize(image: cgImage) else { return }
-        suggestions = FieldSuggester.suggestions(from: page)
-    }
-
-    private func fill(_ suggestion: FieldSuggester.Suggestion) {
-        var markup = PageMarkup(kind: .text(""),
-                                pageIndex: pageIndex,
-                                origin: suggestion.origin,
-                                widthFraction: suggestion.widthFraction)
-        markup.fontFraction = suggestion.fontFraction
-        markup.ink = ink
-        markups.append(markup)
-        selectedID = markup.id
-        draftText = ""
-        editingID = markup.id
     }
 
     private func addText() {

@@ -115,12 +115,16 @@ Filled text is drawn as real text, not an image, so a completed form is searchab
 `render` returns **nil** (never empty `Data`) on an unreadable source, so a failure can't
 overwrite a real document with a blank one.
 
-Placement is **free**, not detected. A scan of paper has no fields; `FieldSuggester` only
-*suggests* — it reads the line boxes Vision already produced and applies text heuristics
-(a line ending `Name:` has a blank to its right; a run of underscores is a blank). No new
-computer vision, and it degrades to the existing free placement when it finds nothing.
-Guarded against false targets: prose ending in a keyword is rejected, labels with no room
-are skipped, overlapping targets on one line collapse.
+Placement is **free**, not detected. A scan of paper has no fields to fill.
+
+`FieldSuggester` exists and is tested but is **not called (parked 2026-08-08)**. It was
+tried and pulled: on a real receipt it drew targets over `Billing Address` and `Payment Term`
+whose answers were already printed. Clipping and an occupancy check fixed the overlap, but
+the core problem stands — **telling a blank field from a filled one** is the hard part, and
+text presence only catches it when the answer is text on the same line. Handwriting on a
+ruled line, checkboxes and columns all defeat it. A wrong suggestion costs more than no
+suggestion, since the three manual tools are never wrong. Reviving it needs real
+blank-detection (ruled lines, boxes), not better text rules.
 
 Editor positions markups against a rasterized preview; saving re-renders from the untouched
 original. Markups are stored **normalized to the page**, since those two coordinate spaces
