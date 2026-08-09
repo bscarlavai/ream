@@ -98,9 +98,33 @@ First release.
 | Devices | iPhone only |
 | Export compliance | `ITSAppUsesNonExemptEncryption` is already `false` in the plist, so the upload question is skipped |
 
-**Privacy nutrition labels: Data Not Collected.** Ream has no analytics, no accounts and makes
-no network requests of its own. RevenueCat is the only SDK, and it sees purchase transactions
-only. Answer the questionnaire accordingly rather than guessing "maybe".
+### Privacy nutrition labels
+
+**Do not copy another app's answers.** Ream's SDK surface is narrower than the -rip family's,
+and over-declaring is not the cautious option: the label is shown to users, and claiming to
+collect a User ID and Usage Data would directly contradict "nothing leaves your phone", which
+is the app's entire pitch.
+
+Verified against RevenueCat's own `PrivacyInfo.xcprivacy` (the authoritative source, not a
+guess), plus a check that Ream never calls `Purchases.logIn()`, never uses RevenueCat's
+paywall UI, and contains no `URLSession`, analytics SDK or other package.
+
+Declare exactly one data type:
+
+| Question | Answer |
+|---|---|
+| Do you collect data? | **Yes** (RevenueCat receives purchases) |
+| Data type | **Purchases → Purchase History**, and nothing else |
+| Purpose | **App Functionality** only. Not Analytics. |
+| Linked to the user's identity? | **No.** Ream never calls `logIn`, so the RevenueCat App User ID stays anonymous. |
+| Used for tracking? | **No** |
+
+Everything else is **Data Not Collected**: no Identifiers, no Usage Data, no Contact Info, no
+Diagnostics. Documents, scanned text and OCR output never leave the device at all, so none of
+them is collected in Apple's sense.
+
+⚠️ **If an analytics SDK, RevenueCat's paywall UI, or `Purchases.logIn()` is ever added, this
+table changes** and the labels must be updated with the next version.
 
 **App Review Notes** (App Store Connect → the version's *App Review Information → Notes*)
 ```
