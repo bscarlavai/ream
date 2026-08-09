@@ -102,6 +102,12 @@ enum LaunchArgument {
     static let showFillSign = "--show-fillsign"
     /// Pre-fills the search field, so a search-in-progress can be captured.
     static let search = "--search"
+    /// Pre-selects a label filter by name, so a filtered library can be captured.
+    static let filterLabel = "--filter-label"
+    /// Forces the non-supporter state. Simulators accumulate StoreKit test transactions
+    /// that RevenueCat syncs into a live entitlement, which makes the locked view of the
+    /// finish picker unreachable — and that is the view a new user actually sees.
+    static let forceLocked = "--locked"
     /// Opens Settings straight through to the finish picker.
     static let showFinishes = "--show-finishes"
     /// Hides debug-only chrome while keeping the other arguments working.

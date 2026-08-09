@@ -72,7 +72,15 @@ private struct RootView: View {
                 OnboardingView()
             }
             .task {
-                if !hasSeenOnboarding {
+                var suppressOnboarding = false
+                #if DEBUG
+                // A fresh install for screenshots starts with onboarding unseen, which then
+                // covers whatever screen was being captured. `--onboarding-page` is how
+                // onboarding itself gets shot.
+                suppressOnboarding = LaunchArgument.isPresent(LaunchArgument.screenshotMode)
+                    && LaunchArgument.intValue(after: LaunchArgument.onboardingPage) == nil
+                #endif
+                if !hasSeenOnboarding, !suppressOnboarding {
                     hasSeenOnboarding = true
                     showingOnboarding = true
                 }

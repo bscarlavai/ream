@@ -233,9 +233,9 @@ layer — it makes search a `@Query` predicate instead of parsing every PDF per 
 
 ## Monetization
 
-`SupporterService`, **RevenueCat** (matching PokeArtist and the -rip family). ⚠️ The API key
-in `SupporterService.apiKey` is a placeholder — replace it with Ream's own public `appl_` key
-or offerings resolve empty and no tiers appear. Entitlement identifier is `Supporter`,
+`SupporterService`, **RevenueCat** (matching PokeArtist and the -rip family). The public
+`appl_` key in `SupporterService.apiKey` is Ream's own and is meant to ship in the binary —
+it is not a secret. Entitlement identifier is `Supporter`,
 case-sensitive; if it disagrees with the dashboard every supporter silently becomes a
 non-supporter.
 
@@ -306,7 +306,9 @@ All tokens in `Theme.swift`. Semantic names only; no raw colors, radii, or spaci
 
 **Accent finishes** (`AccentFinish`): Blueprint is the free default; Graphite, Manila,
 Red Pen and Chalkboard need Supporter. Named as desk materials, never as a color picker.
-Locked finishes render at **full color** — never greyed, never padlocked, never badged.
+Locked finishes render at **full color** with a plain `Supporter` badge — never greyed,
+never padlocked. ⚠️ Do not add `.disabled(locked)` to the row: it dims the swatch, and the
+swatch is the thing being sold. The button's own `guard` already refuses the tap.
 
 ⚠️ **A filled control needs a DIFFERENT accent value than an icon does.** `color(for:)` goes
 light in dark mode so an icon reads on a near-black canvas — but a prominent button fills

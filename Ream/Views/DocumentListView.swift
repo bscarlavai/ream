@@ -212,12 +212,19 @@ struct DocumentListView: View {
                 if LaunchArgument.isPresent(LaunchArgument.seedSamples), documents.isEmpty {
                     await SampleScans.generate(into: context, pipeline: pipeline)
                 }
-                if LaunchArgument.isPresent(LaunchArgument.showSettings) {
+                // `--show-finishes` deep-links *within* Settings, so it implies opening it.
+                if LaunchArgument.isPresent(LaunchArgument.showSettings)
+                    || LaunchArgument.isPresent(LaunchArgument.showFinishes) {
                     showingSettings = true
                 }
                 if LaunchArgument.isPresent(LaunchArgument.showDetail),
                    let first = documents.first {
                     path.append(first)
+                }
+                if let name = LaunchArgument.stringValue(after: LaunchArgument.filterLabel),
+                   let match = labels.first(where: { $0.name == name }) {
+                    activeLabelIDs = [match.id]
+                    refreshFilter()
                 }
                 if let query = LaunchArgument.stringValue(after: LaunchArgument.search) {
                     searchText = query
@@ -239,7 +246,7 @@ struct DocumentListView: View {
         List {
             ForEach(filtered) { document in
                 NavigationLink(value: document) {
-                    DocumentRow(document: document)
+                    DocumentRow(document: document, query: searchText)
                 }
                 .contextMenu { rowMenu(for: document) }
             }
@@ -355,6 +362,11 @@ struct DocumentListView: View {
     }
 
     private func showPromptIfDue() {
+        #if DEBUG
+        // Seeding runs four scans back to back, which trips the cross-promo's second-scan
+        // threshold and covers the library with a sheet mid-capture.
+        if LaunchArgument.isPresent(LaunchArgument.screenshotMode) { return }
+        #endif
         switch engagement.nextPrompt(isSupporter: supporter.isSupporter) {
         case .review:
             requestReview()
@@ -446,6 +458,45 @@ struct DocumentListView: View {
 
 private struct DocumentRow: View {
     let document: ScannedDocument
+    /// The active search, so a row can show WHY it matched.
+    var query: String = ""
+
+    /// A window of the transcript around the search term, with the term highlighted.
+    ///
+    /// Without this a content match is unexplainable: searching a word that appears inside a
+    /// page returns a document whose title doesn't contain it, and nothing on screen connects
+    /// the two. Mail and Notes both show the matching line for the same reason.
+    ///
+    /// Returns nil when the title already explains the match, so an obvious result doesn't
+    /// carry a redundant second line.
+    private var matchSnippet: AttributedString? {
+        let term = query.trimmingCharacters(in: .whitespaces)
+        guard term.count >= 2,
+              !document.title.localizedCaseInsensitiveContains(term),
+              let hit = document.transcript.range(of: term, options: .caseInsensitive)
+        else { return nil }
+
+        let transcript = document.transcript
+        let lead = transcript.index(hit.lowerBound,
+                                    offsetBy: -34,
+                                    limitedBy: transcript.startIndex) ?? transcript.startIndex
+        let trail = transcript.index(hit.upperBound,
+                                     offsetBy: 34,
+                                     limitedBy: transcript.endIndex) ?? transcript.endIndex
+
+        var text = String(transcript[lead..<trail])
+            .replacingOccurrences(of: "\n", with: " ")
+            .trimmingCharacters(in: .whitespaces)
+        if lead > transcript.startIndex { text = "…" + text }
+        if trail < transcript.endIndex { text += "…" }
+
+        var attributed = AttributedString(text)
+        if let range = attributed.range(of: term, options: .caseInsensitive) {
+            attributed[range].inlinePresentationIntent = .stronglyEmphasized
+            attributed[range].backgroundColor = .accentColor.opacity(0.22)
+        }
+        return attributed
+    }
 
     var body: some View {
         HStack(alignment: .center, spacing: Theme.Spacing.medium) {
@@ -463,6 +514,16 @@ private struct DocumentRow: View {
                     .font(.body.weight(.medium))
                     .foregroundStyle(Theme.primaryText)
                     .lineLimit(2)
+
+                // Sits directly under the title, because it explains the title: this row is
+                // here despite its name not matching what was typed.
+                if let matchSnippet {
+                    Text(matchSnippet)
+                        .font(.caption)
+                        .foregroundStyle(Theme.secondaryText)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
 
                 if let labels = document.labels, !labels.isEmpty {
                     HStack(spacing: 4) {

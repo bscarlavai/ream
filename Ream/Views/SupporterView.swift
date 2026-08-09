@@ -65,7 +65,11 @@ struct SupporterView: View {
                              : locked ? .badge("Supporter") : .none)
         }
         .buttonStyle(.plain)
-        .disabled(locked)
+        // Deliberately NOT `.disabled(locked)`. That dims the whole row including the
+        // swatch, and a washed-out swatch is a poor advert for the thing being sold — the
+        // colour is the entire product. The button already refuses the tap above, and the
+        // "Supporter" badge says why, so nothing is lost by leaving the row at full colour.
+        .accessibilityHint(locked ? "Requires the Supporter purchase" : "")
     }
 
     private var tiers: some View {

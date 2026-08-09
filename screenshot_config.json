@@ -2,7 +2,10 @@
   "app_name": "Ream",
   "background": {
     "type": "gradient",
-    "colors": ["#0A1C2E", "#04080D"],
+    "colors": [
+      "#0A1C2E",
+      "#04080D"
+    ],
     "direction": "vertical"
   },
   "text_color": "#FFFFFF",
@@ -18,8 +21,8 @@
     },
     {
       "filename": "02_search.png",
-      "headline": "Find It By What's *Inside*",
-      "subheadline": "Search what the page says, not what you named it"
+      "headline": "Search *Inside* the Page",
+      "subheadline": "Every word Ream reads is searchable, even a pet's name"
     },
     {
       "filename": "03_fillsign.png",
@@ -28,8 +31,8 @@
     },
     {
       "filename": "04_library.png",
-      "headline": "Keep Paper *Organized*",
-      "subheadline": "Label anything, filter by label, find it by sight"
+      "headline": "Label It, *Filter* It",
+      "subheadline": "Tap a label to pull up that pile and nothing else"
     },
     {
       "filename": "05_finishes.png",

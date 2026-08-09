@@ -24,10 +24,9 @@ final class SupporterService {
     /// RevenueCat's **public** SDK key. Designed to ship in the binary — it is not a secret
     /// and grants no write access.
     ///
-    /// ⚠️ Replace with Ream's own key: RevenueCat → Project settings → API keys → the public
-    /// app-specific key for the iOS app, starting `appl_`. Until then offerings resolve empty
-    /// and the tiers simply do not appear.
-    private static let apiKey = "appl_REPLACE_WITH_REAM_IOS_KEY"
+    /// Ream's own iOS key (RevenueCat → Project settings → API keys). If this is ever swapped
+    /// for another project's key, offerings resolve empty and the tiers simply do not appear.
+    private static let apiKey = "appl_rcLdfntrdWbCQycNUmbqIRjUmVx"
 
     /// The entitlement identifier configured in the RevenueCat dashboard. **Case-sensitive**,
     /// and compared as a plain string — if these two ever disagree, every supporter silently
@@ -131,6 +130,10 @@ final class SupporterService {
 
     private func refreshEntitlement() async {
         #if DEBUG
+        if LaunchArgument.isPresent(LaunchArgument.forceLocked) {
+            isSupporter = false
+            return
+        }
         // Checked before RevenueCat, so the override works with no network and no offering.
         if UserDefaults.standard.bool(forKey: Self.debugOverrideKey) {
             isSupporter = true
@@ -144,6 +147,10 @@ final class SupporterService {
 
     private func applyEntitlement(from info: CustomerInfo) {
         #if DEBUG
+        if LaunchArgument.isPresent(LaunchArgument.forceLocked) {
+            isSupporter = false
+            return
+        }
         if UserDefaults.standard.bool(forKey: Self.debugOverrideKey) {
             isSupporter = true
             return

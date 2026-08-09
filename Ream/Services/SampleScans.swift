@@ -64,6 +64,9 @@ enum SampleScans {
             return label
         }
 
+        let sampleTitles = ["Northgate Property", "Central Veterinary",
+                            "Appliance Warranty", "Service Authorization"]
+
         var pages: [UIImage] = documents.map { renderPage(lines: $0) }
         let form = renderForm()
         pages.append(form.image)
@@ -79,7 +82,12 @@ enum SampleScans {
             newest.labels = index == 0
                 ? [labels[0], labels[2]]        // one document with two labels
                 : [labels[index % labels.count]]
-            if index == pages.count - 1 { newest.title = "Service Authorization" }
+            // Titles are set explicitly rather than left to OCR title-detection. On these
+            // synthetic pages the heading is the same weight as the body, so one of them
+            // falls through to the "Scan <date>" fallback — accurate behaviour, but a
+            // date-named row is not what the library looks like once a user has renamed
+            // anything, and these seed the App Store screenshots.
+            newest.title = sampleTitles[index]
         }
         try? context.save()
 
